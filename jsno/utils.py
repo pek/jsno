@@ -40,27 +40,6 @@ def is_optional(type_) -> bool:
     )
 
 
-def dataclass_has_default(cls, name: str) -> bool:
-    """
-    Check if dataclass cls has a default value for the field
-    with given name.
-    """
-
-    if hasattr(cls, name):
-        # defined in the class instance
-        return True
-
-    # check fields for defaults and default factories
-    for field in dataclasses.fields(cls):
-        if field.name == name:
-            return (
-                field.default is not dataclasses.MISSING or
-                field.default_factory is not dataclasses.MISSING
-            )
-
-    return False
-
-
 UTC = zoneinfo.ZoneInfo("UTC")
 
 

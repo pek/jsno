@@ -9,7 +9,7 @@ from collections.abc import Mapping, Sequence, Set
 from typing import Any, Union
 
 
-from jsno.utils import get_origin, get_args, dataclass_has_default
+from jsno.utils import get_origin, get_args
 from jsno.variant import VariantFamilyBase
 
 
