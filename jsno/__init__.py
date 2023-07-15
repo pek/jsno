@@ -2,7 +2,7 @@ import json
 
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, UnjsonifyError
-from jsno.variant import get_variantclass, variantclass
+from jsno.variant import get_variantclass, variantclass, variantlabel
 
 
 def dumps(value, **kwargs):

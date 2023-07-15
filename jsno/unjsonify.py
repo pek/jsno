@@ -17,71 +17,6 @@ class UnjsonifyError(TypeError):
     pass
 
 
-@functools.singledispatch
-def unjsonify_type(value, as_type):
-    raise TypeError(f"Unjsonify not defined for {as_type}")
-
-
-def unjsonify_dataclass(value, as_type):
-
-    kwargs = {
-        field.name:  unjsonify[field.type](value.get(field.name))
-        for field in dataclasses.fields(as_type)
-        if (
-            field.name in value or
-            field.default is not  dataclasses.MISSING or
-            field.default_factory is not dataclasses.MISSING
-        )
-    }
-    return as_type(**kwargs)
-
-
-def unjsonify_variantclass(value, as_type, variantclass):
-    label_name = variantclass.label_name
-
-    label = value.get(label_name)
-    if label is None:
-        raise_error(value, as_type, f"missing {label}")
-
-    variant_type = variantclass.get_variant(label)
-    if variant_type is None:
-        raise_error(value, as_type, f"unknown {label_name} label: {label}")
-
-    return unjsonify._dispatch(variant_type)(value)
-
-
-class Unjsonify:
-
-    def _dispatch(self, type_):
-        if dataclasses.is_dataclass(type_):
-            return lambda value: unjsonify_dataclass(value, type_)
-
-        origin = get_origin(type_) or type_
-
-        if origin is Union:
-            # special case needed, as singledispatch fails cannot handle
-            # typing.Union
-            func = unjsonify_union
-        else:
-            func = unjsonify_type.dispatch(origin)
-
-        # return a specialized version of the unjsonify function
-        return lambda value: func(value, type_)
-
-    def __getitem__(self, type_):
-
-        if (variantclass := get_variantclass(type_)):
-            return lambda value: unjsonify_variantclass(value, type_, variantclass)
-
-        return self._dispatch(type_)
-
-    def register(self, type_):
-        return unjsonify_type.register(type_)
-
-
-unjsonify = Unjsonify()
-
-
 def raise_error(value: Any, as_type: Any, detail=None):
     raise UnjsonifyError(f"Cannot unjsonify as {as_type.__name__}", value, detail)
 
@@ -117,6 +52,78 @@ def cast(value: Any, as_type: Any) -> Any:
 
     raise_error(value, as_type)
 
+
+@functools.singledispatch
+def unjsonify_type(value, as_type):
+    raise TypeError(f"Unjsonify not defined for {as_type}")
+
+
+def unjsonify_dataclass(value, as_type):
+    typecheck(value, dict, as_type)
+
+    kwargs = {
+        field.name:  unjsonify[field.type](value.get(field.name))
+        for field in dataclasses.fields(as_type)
+        if (
+            field.name in value or
+            field.default is not  dataclasses.MISSING or
+            field.default_factory is not dataclasses.MISSING
+        )
+    }
+    try:
+        return as_type(**kwargs)
+    except TypeError as exc:
+        detail = exc.args[0]
+
+    raise_error(value, as_type, detail)
+
+
+def unjsonify_variantclass(value, as_type, variantclass):
+    typecheck(value, dict, as_type)
+
+    label_name = variantclass.label_name
+
+    label = value.get(label_name)
+    if label is None:
+        raise_error(value, as_type, f"missing {label}")
+
+    variant_type = variantclass.get_variant(label)
+    if variant_type is None or not issubclass(variant_type, as_type):
+        raise_error(value, as_type, f"unknown {label_name} label: {label}")
+
+    return unjsonify._dispatch(variant_type)(value)
+
+
+class Unjsonify:
+
+    def _dispatch(self, type_):
+        if dataclasses.is_dataclass(type_):
+            return lambda value: unjsonify_dataclass(value, type_)
+
+        origin = get_origin(type_) or type_
+
+        if origin is Union:
+            # special case needed, as singledispatch fails cannot handle
+            # typing.Union
+            func = unjsonify_union
+        else:
+            func = unjsonify_type.dispatch(origin)
+
+        # return a specialized version of the unjsonify function
+        return lambda value: func(value, type_)
+
+    def __getitem__(self, type_):
+
+        if (variantclass := get_variantclass(type_)):
+            return lambda value: unjsonify_variantclass(value, type_, variantclass)
+
+        return self._dispatch(type_)
+
+    def register(self, type_):
+        return unjsonify_type.register(type_)
+
+
+unjsonify = Unjsonify()
 
 
 @unjsonify.register(type(None))

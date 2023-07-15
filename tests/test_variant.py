@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from jsno import jsonify, unjsonify, variantclass, dumps
+import pytest
+
+from jsno import jsonify, unjsonify, variantclass, variantlabel, dumps, UnjsonifyError
 
 
 
@@ -26,6 +28,7 @@ class Variable(Expression):
 
 
 @dataclass
+@variantlabel('NOT')
 class Not(Expression):
     expr: Expression
 
@@ -64,7 +67,7 @@ def test_jsonify_variant():
     assert jsonified == {
         "type": "And",
         "left": {
-            "type": "Not",
+            "type": "NOT",
             "expr": {
                 "type": "Variable",
                 "name": "x"
@@ -86,3 +89,22 @@ def test_jsonify_variant():
     unjsonified = unjsonify[Expression](jsonified)
 
     assert unjsonified == expr
+
+
+def test_jsonify_variant_not_subclass_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Or]({"type": "Literal", "value": False})
+
+
+def test_jsonify_variant_unknown_label_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Expression]({"type": "Whatever", "value": False})
+
+
+def test_jsonify_variant_no_label_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Expression]({"x-type": "Literal", "value": False})
+
+def test_jsonify_variant_not_dict_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Expression]("Something else")

@@ -120,3 +120,13 @@ def test_jsonify_with_jsonify_method():
     email = EmailAddress(user="foobar", domain="example.com")
 
     assert jsonify(email) == "foobar@example.com"
+
+
+def test_ujsonify_with_missing_properties_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[EmailAddress]({'user': 'foo'})
+
+
+def test_ujsonify_with_not_dict_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[EmailAddress]("Something else")

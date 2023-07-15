@@ -7,11 +7,13 @@ class VariantClass:
         self.cls = cls
         self.label_name = label_name
 
+        self.label_for_class = {}
+
     def get_variant(self, label, cls=None):
         if cls is None:
             cls = self.cls
 
-        if label == cls.__name__:
+        if label == self.get_label(cls):
             return cls
 
         for sub in cls.__subclasses__():
@@ -21,11 +23,15 @@ class VariantClass:
         return None
 
     def get_label(self, cls):
-        return cls.__name__
+        return self.label_for_class.get(cls) or cls.__name__
 
 
 @functools.singledispatch
 def _get_variantclass(cls):
+    """
+    Get the VariantClass instance corresponding to a class,
+    or None, if it is not part of a variant hierarchy
+    """
     return None
 
 
@@ -48,3 +54,12 @@ def get_variantclass(cls):
         return _get_variantclass.dispatch(cls)(None)
     else:
         return None
+
+
+def variantlabel(label):
+
+    def decorator(cls):
+        get_variantclass(cls).label_for_class[cls] = label
+        return cls
+
+    return decorator
