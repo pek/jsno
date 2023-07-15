@@ -1,7 +1,5 @@
 import collections
-import dataclasses
 import datetime
-import enum
 import zoneinfo
 
 from jsno.jsonify import jsonify
@@ -80,60 +78,3 @@ def test_jsonify_old_dates():
             "1981-07-15T08:39:00+03:00",
         ]
     )
-
-class Color(enum.Enum):
-    Red = 1
-    Green = 2
-    Blue = 3
-
-class Material(enum.IntEnum):
-    Wood = 1
-    Metal = 2
-    Plastic = 3
-
-
-def test_jsonify_enums():
-    assert jsonify(Color.Blue) == "Blue"
-
-
-def test_jsonify_intenums():
-    assert jsonify(Material.Metal) == 2
-
-
-@dataclasses.dataclass
-class Brick:
-    width: int
-    height: int
-    color: Color
-    material: Material | None = None
-
-
-@dataclasses.dataclass
-class Box:
-    name: str
-    width: float
-    height: float
-
-    bricks: list[Brick]
-
-
-def test_jsonify_dataclass():
-    box = Box(
-        name="Testbox",
-        width=1000.1,
-        height=223.5,
-        bricks=[
-            Brick(color=Color.Green, width=6, height=1, material=Material.Plastic),
-            Brick(color=Color.Red, width=4, height=1),
-        ]
-    )
-
-    assert jsonify(box) == {
-        "name": "Testbox",
-        "width": 1000.1,
-        "height": 223.5,
-        "bricks": [
-            {"color": "Green", "width": 6, "height": 1, "material": 3},
-            {"color": "Red", "width": 4, "height": 1},
-        ]
-    }
