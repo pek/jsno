@@ -9,4 +9,4 @@ def dumps(value, **kwargs):
 
 
 def loads(value, as_type, **kwargs):
-    return json.loads(unjsonify[as_type](value), **kwargs)
+    return unjsonify[as_type](json.loads(value, **kwargs))

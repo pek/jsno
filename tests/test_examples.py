@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 
-from jsno import jsonify, unjsonify
+from jsno import jsonify, unjsonify, dumps, loads
 
 
 def test_domain_record_example():
@@ -25,7 +25,6 @@ def test_domain_record_example():
         ),
     ]
     jsonified = jsonify(domains)
-    print(jsonified)
     assert jsonified == (
         [
             {
@@ -44,3 +43,6 @@ def test_domain_record_example():
 
     assert unjsonified == domains
 
+    assert loads(dumps(domains, indent=4), as_type=list[DomainRecord])
+
+    assert domains[0].enabled_at.year == 1992
