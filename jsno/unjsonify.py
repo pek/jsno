@@ -2,7 +2,6 @@ import dataclasses
 import datetime
 import enum
 import functools
-import inspect
 import types
 
 
@@ -11,6 +10,7 @@ from typing import Any, Union
 
 
 from jsno.utils import get_origin, get_args, dataclass_has_default
+from jsno.variant import VariantFamilyBase
 
 
 class UnjsonifyError(TypeError):
@@ -23,10 +23,15 @@ def unjsonify_type(value, as_type):
 
 
 def unjsonify_dataclass(value, as_type):
+
     kwargs = {
-        name:  unjsonify[type_](value.get(name))
-        for (name, type_) in as_type.__annotations__.items()
-        if name in value or not dataclass_has_default(as_type, name)
+        field.name:  unjsonify[field.type](value.get(field.name))
+        for field in dataclasses.fields(as_type)
+        if (
+            field.name in value or
+            field.default is not  dataclasses.MISSING or
+            field.default_factory is not dataclasses.MISSING
+        )
     }
     return as_type(**kwargs)
 
@@ -230,3 +235,18 @@ def _(value, as_type):
         detail = exc.args[0]
 
     raise_error(value, as_type, detail)
+
+
+@unjsonify.register(VariantFamilyBase)
+def _(value, as_type):
+    tag_name = as_type.tag_name
+
+    tag_value = value.get(tag_name)
+    if tag_value is None:
+        raise_error(value, as_type, f"missing {tag_name}")
+
+    variant_type = as_type.get_variant(tag_value)
+    if variant_type is None:
+        raise_error(value, as_type, f"unknown {tag_name} tag: {tag_value}")
+
+    return unjsonify[variant_type](value)

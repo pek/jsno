@@ -48,7 +48,7 @@ The file will look like this:
     },
     {
         "domain": "another.example.com",
-        "ips": [],
+        "ips": []
     }
 ]
 

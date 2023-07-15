@@ -25,7 +25,7 @@ to/from a json structure. Example converters for date and datetime are provided.
 
 Note that the jsoniser unjsonisers are matched in reverse registration order,
 so if there is a separate jsoniser/unjsoniser defined for both a subclass and
-it's superclass, the superclass must be registered first.
+it's superclass, -the superclass must be registered first.
 
 A custom class can be made compatible also by providing jsonify method and
 unjsonify class method.
@@ -41,16 +41,24 @@ from collections.abc import Mapping, Sequence, Set
 
 
 from jsno.utils import is_optional, format_datetime
+from jsno.variant import get_variant_tagging
 
 
 def jsonify_dataclass(value):
-    return {
-        key: jsonify(val)
-        for (key, val) in value.__dict__.items()
+    result = {}
 
-        # skip optional values that are None
-        if not (val is None and is_optional(value.__annotations__[key]))
-    }
+    tagging = get_variant_tagging(value)
+    if tagging:
+        result[tagging.tag_name] = tagging.tag_value
+
+    for (key, val) in value.__dict__.items():
+        if (val is None and is_optional(value.__annotations__[key])):
+            # skip optional values that are None
+            continue
+
+        result[key] = jsonify(val)
+
+    return result
 
 
 @functools.singledispatch
