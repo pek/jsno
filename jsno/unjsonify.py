@@ -6,7 +6,7 @@ import inspect
 import types
 
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Set
 from typing import Any, Union
 
 
@@ -124,6 +124,7 @@ def _(value, as_type):
 
 
 @unjsonify.register(Sequence)
+@unjsonify.register(Set)
 def unjsonify_sequence(value, as_type):
     typecheck(value, list, as_type)
 
@@ -161,7 +162,7 @@ def _(value, as_type):
 
 
 @unjsonify.register(Mapping)
-def _(value, as_type, ):
+def _(value, as_type):
     """
     Unjsonify any Mapping type. Expects the input value to be
     a JSON object (dict).
@@ -171,7 +172,7 @@ def _(value, as_type, ):
 
     arg_types = get_args(as_type)
     if not arg_types:
-        return cast (value, as_type)
+        return cast(value, as_type)
     else:
         unjsonify_key = unjsonify[arg_types[0]]
         unjsonify_val = unjsonify[arg_types[1]]

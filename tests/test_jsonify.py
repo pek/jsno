@@ -1,3 +1,4 @@
+import collections
 import dataclasses
 import datetime
 import enum
@@ -22,12 +23,23 @@ def test_jsonify_int():
     assert jsonify(123) == 123
 
 
+def test_jsonify_tuple():
+    assert jsonify(("x", 1, datetime.date(2023, 7, 15))) == ["x", 1, "2023-07-15"]
+
+def test_jsonify_se():
+    assert jsonify(set("abababa")) == ["a", "b"]
+
+
 def test_jsonify_dict():
     assert jsonify({"x": {"z": 123}}) == {"x": {"z": 123}}
 
 
 def test_jsonify_list_of_bools():
     assert jsonify([True, False]) == [True, False]
+
+
+def test_jsonify_counter():
+    assert jsonify(collections.Counter("abababa") == {"a": 4, "b": 3})
 
 
 def test_jsonify_dates():

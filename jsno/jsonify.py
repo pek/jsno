@@ -37,6 +37,8 @@ import datetime
 import enum
 import functools
 
+from collections.abc import Mapping, Sequence, Set
+
 
 from jsno.utils import is_optional, format_datetime
 
@@ -71,15 +73,30 @@ def _(value):
     return value
 
 
-@jsonify.register(dict)
+@jsonify.register(Mapping)
 def _(value):
     return {key: jsonify(val) for (key, val) in value.items()}
 
 
-@jsonify.register(list)
-@jsonify.register(tuple)
-@jsonify.register(set)
+@jsonify.register(Sequence)
 def _(value):
+    return [jsonify(val) for val in value]
+
+
+@jsonify.register(Set)
+def _(value):
+    """
+    Set is not a sequence, so it needs it's own jsonifier.
+    Because the order of iterating over a set is not defined, the jsonification
+    tries to sort the set first, to make the results more predictable.
+    """
+
+    # if possible, sort the values first.
+    try:
+        value = sorted(value)
+    except:
+        pass
+
     return [jsonify(val) for val in value]
 
 

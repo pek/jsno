@@ -57,6 +57,10 @@ def test_unjsonify_list_of_bools():
     assert unjsonify[list[bool]]([True, False]) == [True, False]
 
 
+def test_unjsonify_set_of_ints():
+    assert unjsonify[set[int]]([2, 3, 4, 102]) == set((2, 3, 4, 102))
+
+
 def test_unjsonify_list_of_bools_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[list[bool]]([True, 120])
