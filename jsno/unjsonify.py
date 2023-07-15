@@ -114,6 +114,9 @@ class Unjsonify:
 
     def __getitem__(self, type_):
 
+        if hasattr(type_, "unjsonify"):
+            return type_.unjsonify
+
         if (variantclass := get_variantclass(type_)):
             return lambda value: unjsonify_variantclass(value, type_, variantclass)
 

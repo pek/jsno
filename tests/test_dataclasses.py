@@ -115,6 +115,11 @@ class EmailAddress:
     def jsonify(self) -> str:
         return f'{self.user}@{self.domain}'
 
+    @classmethod
+    def unjsonify(cls, value):
+        user, domain = value.split('@')
+        return cls(user=user, domain=domain)
+
 
 def test_jsonify_with_jsonify_method():
     email = EmailAddress(user="foobar", domain="example.com")
@@ -122,11 +127,18 @@ def test_jsonify_with_jsonify_method():
     assert jsonify(email) == "foobar@example.com"
 
 
+def test_unjsonify_with_unjsonify_classmethod():
+    email = unjsonify[EmailAddress]("foobar@example.com")
+
+    assert email == EmailAddress(user="foobar", domain="example.com")
+
+
 def test_ujsonify_with_missing_properties_error():
     with pytest.raises(UnjsonifyError):
-        unjsonify[EmailAddress]({'user': 'foo'})
+        unjsonify[Brick]({"color": "Yellow"})
 
 
 def test_ujsonify_with_not_dict_error():
     with pytest.raises(UnjsonifyError):
-        unjsonify[EmailAddress]("Something else")
+        unjsonify[Brick]("Something else")
+
