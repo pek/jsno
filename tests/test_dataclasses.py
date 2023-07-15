@@ -11,6 +11,7 @@ class Color(enum.Enum):
     Green = 2
     Blue = 3
 
+
 class Material(enum.IntEnum):
     Wood = 1
     Metal = 2
@@ -23,6 +24,7 @@ def test_jsonify_enums():
 
 def test_jsonify_intenums():
     assert jsonify(Material.Metal) == 2
+
 
 def test_unjsonify_enum():
     assert unjsonify[Color]("Blue") == Color.Blue
@@ -80,6 +82,7 @@ def test_jsonify_dataclass():
         ]
     }
 
+
 def test_unjsonify_dataclass():
     json_box = {
         "name": "Testbox",
@@ -102,6 +105,7 @@ def test_unjsonify_dataclass():
     )
 
     assert unjsonify[Box](json_box) == box
+
 
 @dataclasses.dataclass
 class EmailAddress:

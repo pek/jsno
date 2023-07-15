@@ -1,13 +1,9 @@
-import enum
-import pytest
-
 from dataclasses import dataclass
-from typing import Any
 
-from jsno import jsonify, unjsonify, variant_family, dumps
+from jsno import jsonify, unjsonify, variant_family
 
 
-expression_type = variant_family('type')
+expression_type = variant_family(tag_name='type')
 
 
 @dataclass
