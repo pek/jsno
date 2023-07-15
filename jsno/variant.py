@@ -1,58 +1,50 @@
-import dataclasses
 import functools
 
 
-@dataclasses.dataclass
-class VariantTagging:
-    family: "VariantFamily"
-    tag_value: str
+class VariantClass:
 
-    @property
-    def tag_name(self):
-        return self.family.tag_name
+    def __init__(self, cls, label_name):
+        self.cls = cls
+        self.label_name = label_name
+
+    def get_variant(self, label, cls=None):
+        if cls is None:
+            cls = self.cls
+
+        if label == cls.__name__:
+            return cls
+
+        for sub in cls.__subclasses__():
+            if (it := self.get_variant(label, sub)):
+                return it
+
+        return None
+
+    def get_label(self, cls):
+        return cls.__name__
 
 
 @functools.singledispatch
-def get_variant_tagging(arg):
-    """
-    Get the tagging info for a value. Used as a dispatch table, as
-    singledispatch implements the mro resolution algorithm,
-    """
+def _get_variantclass(cls):
     return None
 
 
-class VariantFamilyBase:
-    pass
+def variantclass(label: str = 'label'):
+
+    def decorator(cls):
+        variantclass = VariantClass(cls, label)
+
+        @_get_variantclass.register(cls)
+        def _(cls):
+            return variantclass
+
+        return cls
+
+    return decorator
 
 
-def variant_family(tag_name: str) -> type:
-    """
-    Create a new variant family class
-    """
-
-    name = tag_name  # circumventing scoping problems
-
-    class VariantFamily(VariantFamilyBase):
-        class_by_tag = {}
-        tag_name = name
-
-        def __new__(cls, tag_value):
-
-            def decorator(variant_cls):
-                cls.class_by_tag[tag_value] = variant_cls
-
-                tagging = VariantTagging(family=VariantFamily, tag_value=tag_value)
-
-                @get_variant_tagging.register(variant_cls)
-                def _(arg):
-                    return tagging
-
-                return variant_cls
-
-            return decorator
-
-        @classmethod
-        def get_variant(cls, tag):
-            return cls.class_by_tag.get(tag)
-
-    return VariantFamily
+def get_variantclass(cls):
+    if isinstance(cls, type):
+        return _get_variantclass.dispatch(cls)(None)
+    else:
+        return None

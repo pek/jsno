@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 
-from jsno import jsonify, unjsonify, variant_family
+from jsno import jsonify, unjsonify, variantclass, dumps
 
 
-expression_type = variant_family(tag_name='type')
+
+@variantclass(label='type')
+class Expression:
+    pass
 
 
 @dataclass
-@expression_type("literal")
-class Literal:
+class Literal(Expression):
     value: bool
 
     def evaluate(self, context):
@@ -16,8 +18,7 @@ class Literal:
 
 
 @dataclass
-@expression_type("variable")
-class Variable:
+class Variable(Expression):
     name: str
 
     def evaluate(self, context):
@@ -25,29 +26,26 @@ class Variable:
 
 
 @dataclass
-@expression_type("not")
-class Not:
-    expr: expression_type
+class Not(Expression):
+    expr: Expression
 
     def evaluate(self, context):
         return not self.expr.evaluate(context)
 
 
 @dataclass
-class BinaryExpression:
-    left: expression_type
-    right: expression_type
+class BinaryExpression(Expression):
+    left: Expression
+    right: Expression
 
 
 @dataclass
-@expression_type("and")
 class And(BinaryExpression):
     def evaluate(self, context):
         return self.left.evaluate(context) and self.right.evaluate(context)
 
 
 @dataclass
-@expression_type("or")
 class Or(BinaryExpression):
     def evaluate(self, context):
         return self.left.evaluate(context) or self.right.evaluate(context)
@@ -62,28 +60,29 @@ def test_expression_evaluation():
 
 def test_jsonify_variant():
     jsonified =  jsonify(expr)
+  #  print(dumps(expr, indent=4 ))
     assert jsonified == {
-        "type": "and",
+        "type": "And",
         "left": {
-            "type": "not",
+            "type": "Not",
             "expr": {
-                "type": "variable",
+                "type": "Variable",
                 "name": "x"
             }
         },
         "right": {
-            "type": "or",
+            "type": "Or",
             "left": {
-                "type": "variable",
+                "type": "Variable",
                 "name": "y"
             },
             "right": {
-                "type": "literal",
+                "type": "Literal",
                 "value": False
             }
         }
     }
 
-    unjsonified = unjsonify[expression_type](jsonified)
+    unjsonified = unjsonify[Expression](jsonified)
 
     assert unjsonified == expr

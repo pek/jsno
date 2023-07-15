@@ -10,7 +10,7 @@ from typing import Any, Union
 
 
 from jsno.utils import get_origin, get_args
-from jsno.variant import VariantFamilyBase
+from jsno.variant import get_variantclass
 
 
 class UnjsonifyError(TypeError):
@@ -36,9 +36,23 @@ def unjsonify_dataclass(value, as_type):
     return as_type(**kwargs)
 
 
+def unjsonify_variantclass(value, as_type, variantclass):
+    label_name = variantclass.label_name
+
+    label = value.get(label_name)
+    if label is None:
+        raise_error(value, as_type, f"missing {label}")
+
+    variant_type = variantclass.get_variant(label)
+    if variant_type is None:
+        raise_error(value, as_type, f"unknown {label_name} label: {label}")
+
+    return unjsonify._dispatch(variant_type)(value)
+
+
 class Unjsonify:
 
-    def __getitem__(self, type_):
+    def _dispatch(self, type_):
         if dataclasses.is_dataclass(type_):
             return lambda value: unjsonify_dataclass(value, type_)
 
@@ -53,6 +67,13 @@ class Unjsonify:
 
         # return a specialized version of the unjsonify function
         return lambda value: func(value, type_)
+
+    def __getitem__(self, type_):
+
+        if (variantclass := get_variantclass(type_)):
+            return lambda value: unjsonify_variantclass(value, type_, variantclass)
+
+        return self._dispatch(type_)
 
     def register(self, type_):
         return unjsonify_type.register(type_)
@@ -235,18 +256,3 @@ def _(value, as_type):
         detail = exc.args[0]
 
     raise_error(value, as_type, detail)
-
-
-@unjsonify.register(VariantFamilyBase)
-def _(value, as_type):
-    tag_name = as_type.tag_name
-
-    tag_value = value.get(tag_name)
-    if tag_value is None:
-        raise_error(value, as_type, f"missing {tag_name}")
-
-    variant_type = as_type.get_variant(tag_value)
-    if variant_type is None:
-        raise_error(value, as_type, f"unknown {tag_name} tag: {tag_value}")
-
-    return unjsonify[variant_type](value)

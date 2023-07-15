@@ -41,15 +41,15 @@ from collections.abc import Mapping, Sequence, Set
 
 
 from jsno.utils import is_optional, format_datetime
-from jsno.variant import get_variant_tagging
+from jsno.variant import get_variantclass
 
 
 def jsonify_dataclass(value):
     result = {}
 
-    tagging = get_variant_tagging(value)
-    if tagging:
-        result[tagging.tag_name] = tagging.tag_value
+    variantclass = get_variantclass(type(value))
+    if variantclass:
+        result[variantclass.label_name] = variantclass.get_label(type(value))
 
     for (key, val) in value.__dict__.items():
         if (val is None and is_optional(value.__annotations__[key])):
