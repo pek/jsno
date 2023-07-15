@@ -116,6 +116,3 @@ def test_jsonify_with_jsonify_method():
     email = EmailAddress(user="foobar", domain="example.com")
 
     assert jsonify(email) == "foobar@example.com"
-
-
-
