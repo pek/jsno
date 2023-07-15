@@ -1,33 +1,41 @@
-import dataclasses
+from dataclasses import dataclass
+from datetime import date
 
 from jsno import jsonify, unjsonify
 
 
 def test_domain_record_example():
 
-    @dataclasses.dataclass
+    @dataclass
     class DomainRecord:
         domain: str
         ips: list[str]
-        enabled: bool = False
+        enabled_at: date | None = None
+
 
     domains = [
-        DomainRecord(domain="example.com", ips=["93.184.216.34"], enabled=True),
-        DomainRecord(domain="another.example.com", ips=[]),
+        DomainRecord(
+            domain="example.com",
+            ips=["93.184.216.34"],
+            enabled_at=date(1992, 1, 1)
+        ),
+        DomainRecord(
+            domain="another.example.com",
+            ips=[]
+        ),
     ]
     jsonified = jsonify(domains)
-
+    print(jsonified)
     assert jsonified == (
         [
             {
                 "domain": "example.com",
                 "ips": ["93.184.216.34"],
-                "enabled": True
+                "enabled_at": "1992-01-01"
             },
             {
                 "domain": "another.example.com",
                 "ips": [],
-                "enabled": False
             }
         ]
     )
