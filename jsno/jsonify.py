@@ -83,7 +83,7 @@ def _(value):
 
 @jsonify.register(Mapping)
 def _(value):
-    return {key: jsonify(val) for (key, val) in value.items()}
+    return {jsonify(key): jsonify(val) for (key, val) in value.items()}
 
 
 @jsonify.register(Sequence)

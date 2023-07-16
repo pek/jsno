@@ -78,3 +78,12 @@ def test_jsonify_old_dates():
             "1981-07-15T08:39:00+03:00",
         ]
     )
+
+
+def test_jsonify_dictionary_with_date_keys():
+
+    assert (
+        jsonify({datetime.date(2023, 7, 16): datetime.date(2023, 7, 17)})
+        ==
+        {"2023-07-16": "2023-07-17"}
+    )
