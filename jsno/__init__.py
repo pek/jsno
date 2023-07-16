@@ -17,9 +17,6 @@ The following types are currently supported:
     - enum types
     - date and datetime
 
-When unjsonising, lists and dicts need to be specified with List[T] and
-Dict[K,V] constructs.
-
 Any type can be made compatible by registering custom functions for converting
 to/from a json structure. Example converters for date and datetime are provided.
 
@@ -27,7 +24,8 @@ Note that the jsoniser unjsonisers are matched in reverse registration order,
 so if there is a separate jsoniser/unjsoniser defined for both a subclass and
 it's superclass, -the superclass must be registered first.
 
-A custom class can be made compatible also by providing jsonify method and
+A custom class can be made compatible also by marking it with the
+`jsonify_with_method` deorator, and providing jsonify method and
 unjsonify class method.
 
 """
@@ -35,6 +33,7 @@ unjsonify class method.
 import json
 
 from jsno.jsonify import jsonify
+from jsno.method import jsonify_with_method
 from jsno.unjsonify import unjsonify, UnjsonifyError
 from jsno.variant import get_variantclass, variantclass, variantlabel
 

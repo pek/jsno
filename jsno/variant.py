@@ -1,7 +1,12 @@
 import functools
 
+from typing import Callable
+
 
 class VariantClass:
+    """
+    VariantClass represents the root of a variant class hierarchy.
+    """
 
     def __init__(self, cls, label_name):
         self.cls = cls
@@ -27,7 +32,7 @@ class VariantClass:
 
 
 @functools.singledispatch
-def _get_variantclass(cls):
+def _get_variantclass(cls: type):
     """
     Get the VariantClass instance corresponding to a class,
     or None, if it is not part of a variant hierarchy
@@ -35,9 +40,23 @@ def _get_variantclass(cls):
     return None
 
 
-def variantclass(label: str = 'label'):
+def get_variantclass(cls : type) -> VariantClass | None:
+    """
+    Get the variantclass that the argument type is part of,
+    or None if it's not part of any.
+    """
+    if isinstance(cls, type):
+        return _get_variantclass.dispatch(cls)(None)
+    else:
+        return None
 
-    def decorator(cls):
+
+def variantclass(label: str = 'label') -> Callable[type, type]:
+    """
+    Decorator for marking the root of a variant family.
+    """
+
+    def decorator(cls: type) -> type:
         variantclass = VariantClass(cls, label)
 
         @_get_variantclass.register(cls)
@@ -49,16 +68,12 @@ def variantclass(label: str = 'label'):
     return decorator
 
 
-def get_variantclass(cls):
-    if isinstance(cls, type):
-        return _get_variantclass.dispatch(cls)(None)
-    else:
-        return None
+def variantlabel(label: str) -> Callable[type, type]:
+    """
+    Decorator for specifying the variant label of a class
+    """
 
-
-def variantlabel(label):
-
-    def decorator(cls):
+    def decorator(cls: type) -> type:
         get_variantclass(cls).label_for_class[cls] = label
         return cls
 

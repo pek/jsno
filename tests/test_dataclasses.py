@@ -1,9 +1,14 @@
+"""
+Tests for jsonifying and unjsonifying dataclasses and enum types.
+
+"""
+
 import dataclasses
 import enum
 import pytest
 
 
-from jsno import jsonify, unjsonify, UnjsonifyError
+from jsno import jsonify, unjsonify, jsonify_with_method, UnjsonifyError
 
 
 class Color(enum.Enum):
@@ -24,6 +29,7 @@ def test_jsonify_enums():
 
 def test_jsonify_intenums():
     assert jsonify(Material.Metal) == 2
+    assert type(jsonify(Material.Metal)) is int
 
 
 def test_unjsonify_enum():
@@ -108,6 +114,7 @@ def test_unjsonify_dataclass():
 
 
 @dataclasses.dataclass
+@jsonify_with_method
 class EmailAddress:
     user: str
     domain: str

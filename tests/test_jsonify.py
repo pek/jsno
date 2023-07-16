@@ -52,7 +52,9 @@ def test_jsonify_dates():
                 datetime.datetime(2023, 7, 15, 8, 40, 10, 120, tzinfo=utc),
                 datetime.datetime(5012, 7, 15, 8, 41, 20, 123400),
             ]
-        ) == [
+        )
+        ==
+        [
             "2023-07-15T08:39:00+03:00",
             "2023-07-15T08:40:10Z",
             "2023-07-15T08:41:20",
@@ -71,12 +73,21 @@ def test_jsonify_old_dates():
                 datetime.datetime(1980, 7, 15, 8, 39, 0, tzinfo=helsinki),
                 datetime.datetime(1981, 7, 15, 8, 39, 0, tzinfo=helsinki),
             ]
-        ) == [
+        )
+        ==
+        [
             "1940-07-15T08:39:00+02:00",
             "1960-07-15T08:39:00+02:00",
             "1980-07-15T08:39:00+02:00",
             "1981-07-15T08:39:00+03:00",
         ]
+    )
+
+def test_jsonify_dictionary_with_date_and_name():
+    assert (
+        jsonify({"name": "test", "date": datetime.date(2023, 7, 16)})
+        ==
+        {"name": "test", "date": "2023-07-16"}
     )
 
 
@@ -87,3 +98,22 @@ def test_jsonify_dictionary_with_date_keys():
         ==
         {"2023-07-16": "2023-07-17"}
     )
+
+
+def test_pure_json():
+    item = {
+        "things": [
+            {
+                "name": f"a{ix}",
+                "scores": [1, 2, 3, ix]
+            }
+            for ix in range(10)
+        ]
+    }
+
+    assert jsonify(item) is item
+
+
+def test_jsonify_bytes():
+    bs = "foobar!".encode('utf-8')
+    assert jsonify(bs) == "Zm9vYmFyIQ=="

@@ -1,3 +1,4 @@
+import base64
 import dataclasses
 import datetime
 import enum
@@ -5,7 +6,7 @@ import functools
 import types
 
 
-from collections.abc import Mapping, Sequence, Set
+from collections.abc import ByteString, Mapping, Sequence, Set
 from typing import Any, Union
 
 
@@ -55,6 +56,10 @@ def cast(value: Any, as_type: Any) -> Any:
 
 @functools.singledispatch
 def unjsonify_type(value, as_type):
+
+    if dataclasses.is_dataclass(as_type):
+        return unjsonify_dataclass(value, as_type)
+
     raise TypeError(f"Unjsonify not defined for {as_type}")
 
 
@@ -97,8 +102,6 @@ def unjsonify_variantclass(value, as_type, variantclass):
 class Unjsonify:
 
     def _dispatch(self, type_):
-        if dataclasses.is_dataclass(type_):
-            return lambda value: unjsonify_dataclass(value, type_)
 
         origin = get_origin(type_) or type_
 
@@ -113,9 +116,6 @@ class Unjsonify:
         return lambda value: func(value, type_)
 
     def __getitem__(self, type_):
-
-        if hasattr(type_, "unjsonify"):
-            return type_.unjsonify
 
         if (variantclass := get_variantclass(type_)):
             return lambda value: unjsonify_variantclass(value, type_, variantclass)
@@ -249,7 +249,7 @@ def _(value, as_type):
 def _(value, as_type):
     typecheck(value, str, as_type)
     try:
-        return datetime.datetime.fromisoformat(value)
+        return as_type.fromisoformat(value)
     except ValueError as exc:
         detail = exc.args[0]
 
@@ -261,8 +261,23 @@ def _(value, as_type):
     typecheck(value, str, as_type)
     try:
         (ys, ms, ds) = value.split('-')
-        return datetime.date(int(ys), int(ms), int(ds))
+        return as_type(int(ys), int(ms), int(ds))
     except ValueError as exc:
         detail = exc.args[0]
 
     raise_error(value, as_type, detail)
+
+
+@unjsonify.register(ByteString)
+def _(value, as_type):
+    typecheck(value, str, as_type)
+
+    try:
+        return base64.b64decode(value.encode('ascii'))
+    except ValueError as exc:
+        detail = exc.args[0]
+
+    raise_error(value, as_type, detail)
+
+
+

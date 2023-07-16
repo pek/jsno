@@ -140,3 +140,7 @@ def test_unjsonify_datetime_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[datetime.datetime]('2023-13-13T12:34:56')
 
+
+def test_unjsonify_bytes():
+    assert unjsonify[bytes]("Zm9vYmFyIQ==") == b"foobar!"
+
