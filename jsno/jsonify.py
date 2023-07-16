@@ -1,37 +1,3 @@
-"""
-Jsonify Python objects to JSON-compatible values, and unjsonify it back to
-Python objects.
-
-Jsonify maps any Python object to a structure consisting of dicts, lists,
-and primitive values that is ready to be converted to JSON.
-
-Unjsonify converts such JSON-structure to a given type. The type to convert
-to must be given as argument.
-
-The following types are currently supported:
-    - int, float, bool
-    - None (null in JSON)
-    - lists and tuples
-    - dicts
-    - types defined as dataclass
-    - enum types
-    - date and datetime
-
-When unjsonising, lists and dicts need to be specified with List[T] and
-Dict[K,V] constructs.
-
-Any type can be made compatible by registering custom functions for converting
-to/from a json structure. Example converters for date and datetime are provided.
-
-Note that the jsoniser unjsonisers are matched in reverse registration order,
-so if there is a separate jsoniser/unjsoniser defined for both a subclass and
-it's superclass, -the superclass must be registered first.
-
-A custom class can be made compatible also by providing jsonify method and
-unjsonify class method.
-
-"""
-
 import dataclasses
 import datetime
 import enum
@@ -42,6 +8,14 @@ from collections.abc import Mapping, Sequence, Set
 
 from jsno.utils import is_optional, format_datetime
 from jsno.variant import get_variantclass
+
+
+
+class NoChange:
+    pass
+
+
+NOCHANGE = NoChange()
 
 
 def jsonify_dataclass(value):
@@ -62,7 +36,7 @@ def jsonify_dataclass(value):
 
 
 @functools.singledispatch
-def jsonify(value):
+def _jsonify(value):
     if hasattr(value, 'jsonify'):
         return value.jsonify()
 
@@ -72,13 +46,30 @@ def jsonify(value):
     raise TypeError("Don't know how to jsonify", value, type(value))
 
 
+class Jsonify:
+
+    def __call__(self, value):
+        result = _jsonify(value)
+
+        if result is NOCHANGE:
+            return value
+        else:
+            return result
+
+    def register(self, type_):
+        return _jsonify.register(type_)
+
+
+jsonify = Jsonify()
+
+
 @jsonify.register(str)
 @jsonify.register(bool)
 @jsonify.register(int)
 @jsonify.register(float)
 @jsonify.register(type(None))
 def _(value):
-    return value
+    return NOCHANGE
 
 
 @jsonify.register(Mapping)
