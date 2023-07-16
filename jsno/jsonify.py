@@ -47,39 +47,51 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
     return result
 
 
+
+
 def jsonify_list(value: list) -> list[JSON] | NoChange:
     """
     Jsonify a list. If the argument list was already valid JSON,
     return NOCHANGE instead.
     """
 
-    result = NOCHANGE
-    nonchange_count = 0
+    count = len(value)
 
-    for val in value:
-        val_json = call_jsonify(val)
-        if val_json is NOCHANGE:
-            if result is NOCHANGE:
-                nonchange_count += 1
-            else:
-                result.append(val)
-        else:
-            if result is NOCHANGE:
-                result = []
-                if nonchange_count > 0:
-                    kx = 0
-                    for it in value:
-                        result.append(it)
-                        kx += 1
-                        if kx >= nonchange_count:
-                            break
+    if count == 0:
+        # shortcut for empty lists
+        return NOCHANGE
 
-            result.append(val_json)
+    ix = 1
+
+    val_json = call_jsonify(value[0])
+    if val_json is not NOCHANGE:
+        # the first value was transformed. Continue with the same
+        # iterator
+        result = [val_json]
+    else:
+        while True:
+            if ix == count:
+                return NOCHANGE
+
+            val_json = call_jsonify(value[ix])
+            if val_json is not NOCHANGE:
+                # found the first transformed value
+                result = value[:ix]
+                result.append(val_json)
+                ix += 1
+                break
+            ix += 1
+
+
+    while ix < count:
+        val_json = call_jsonify(value[ix])
+        result.append(value[ix] if val_json is NOCHANGE else val_json)
+        ix += 1
 
     return result
 
 
-def jsonify_dict(value: dict) -> dict[JSON] | NoChange:
+def jsonify_dict(value: dict) -> dict[str, JSON] | NoChange:
     """
     Jsonify a dict. If the argument dict was already valid JSON,
     return NOCHANGE instead.
@@ -89,34 +101,24 @@ def jsonify_dict(value: dict) -> dict[JSON] | NoChange:
     nonchange_count = 0
 
     for (key, val) in value.items():
-        key_json = call_jsonify(key)
+
+        key_json = key if type(key) is str else str(jsonify(key))
         val_json = call_jsonify(val)
 
-        if key_json is NOCHANGE and val_json is NOCHANGE:
-            if result is NOCHANGE:
+        if result is NOCHANGE:
+            if key_json is key and val_json is NOCHANGE:
                 nonchange_count += 1
                 continue
-            else:
-                result[key] = val
-        else:
-            if result is NOCHANGE:
-                result = {}
-                if nonchange_count > 0:
-                    kx = 0
-                    for (k, v) in value.items():
-                        result[k] = v
-                        kx += 1
-                        if kx >= nonchange_count:
-                            break
 
-            if key_json is NOCHANGE:
-                key_json = key
+            result = {}
+            if nonchange_count > 0:
+                for (k, v) in value.items():
+                    result[k] = v
+                    nonchange_count -= 1
+                    if nonchange_count == 0:
+                        break
 
-
-            if val_json is NOCHANGE:
-                val_json = val
-
-            result[key_json] = val_json
+        result[key_json] = val if val_json is NOCHANGE else val_json
 
     return result
 
@@ -225,7 +227,7 @@ def _(value):
 
 @jsonify.register(Mapping)
 def _(value):
-    return {jsonify(key): jsonify(val) for (key, val) in value.items()}
+    return {str(jsonify(key)): jsonify(val) for (key, val) in value.items()}
 
 
 @jsonify.register(Sequence)

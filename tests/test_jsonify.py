@@ -117,3 +117,15 @@ def test_pure_json():
 def test_jsonify_bytes():
     bs = "foobar!".encode('utf-8')
     assert jsonify(bs) == "Zm9vYmFyIQ=="
+
+
+def test_jsonify_heterogenous_list():
+    assert jsonify(["foo", datetime.date(2023, 7, 16)]) == ["foo", "2023-07-16"]
+
+
+def test_jsonify_empty_list():
+    assert jsonify([]) == []
+
+
+def test_jsonify_dict_with_int_keys():
+    assert jsonify({1: 2, 3: 4}) == {"1": 2, "3": 4}
