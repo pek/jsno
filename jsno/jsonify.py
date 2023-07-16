@@ -17,16 +17,6 @@ valid JSON types.
 JSON = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
 
 
-class NoChange:
-    """
-    Dummy class for representing the "not changed" return value when
-    jsonifying.
-    """
-
-
-NOCHANGE = NoChange()
-
-
 def jsonify_dataclass(value) -> dict[str, JSON]:
     """
     Jsonify a value whose type is a dataclass.
@@ -47,34 +37,31 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
     return result
 
 
-
-
-def jsonify_list(value: list) -> list[JSON] | NoChange:
+def jsonify_list(value: list) -> list[JSON]:
     """
-    Jsonify a list. If the argument list was already valid JSON,
-    return NOCHANGE instead.
+    Jsonify a list.
     """
 
     count = len(value)
 
     if count == 0:
         # shortcut for empty lists
-        return NOCHANGE
+        return value
 
     ix = 1
 
     val_json = call_jsonify(value[0])
-    if val_json is not NOCHANGE:
+    if val_json is not value[0]:
         # the first value was transformed. Continue with the same
         # iterator
         result = [val_json]
     else:
         while True:
             if ix == count:
-                return NOCHANGE
+                return value
 
             val_json = call_jsonify(value[ix])
-            if val_json is not NOCHANGE:
+            if val_json is not value[ix]:
                 # found the first transformed value
                 result = value[:ix]
                 result.append(val_json)
@@ -85,19 +72,18 @@ def jsonify_list(value: list) -> list[JSON] | NoChange:
 
     while ix < count:
         val_json = call_jsonify(value[ix])
-        result.append(value[ix] if val_json is NOCHANGE else val_json)
+        result.append(value[ix] if val_json is value[ix] else val_json)
         ix += 1
 
     return result
 
 
-def jsonify_dict(value: dict) -> dict[str, JSON] | NoChange:
+def jsonify_dict(value: dict) -> dict[str, JSON]:
     """
-    Jsonify a dict. If the argument dict was already valid JSON,
-    return NOCHANGE instead.
+    Jsonify a dict.
     """
 
-    result = NOCHANGE
+    result = None
     nonchange_count = 0
 
     for (key, val) in value.items():
@@ -105,8 +91,8 @@ def jsonify_dict(value: dict) -> dict[str, JSON] | NoChange:
         key_json = key if type(key) is str else str(jsonify(key))
         val_json = call_jsonify(val)
 
-        if result is NOCHANGE:
-            if key_json is key and val_json is NOCHANGE:
+        if result is None:
+            if key_json is key and val_json is val:
                 nonchange_count += 1
                 continue
 
@@ -118,9 +104,9 @@ def jsonify_dict(value: dict) -> dict[str, JSON] | NoChange:
                     if nonchange_count == 0:
                         break
 
-        result[key_json] = val if val_json is NOCHANGE else val_json
+        result[key_json] = val_json
 
-    return result
+    return result or value
 
 
 @functools.singledispatch
@@ -138,14 +124,13 @@ def generic_jsonify(value):
 native_types = (str, int, float, bool, type(None))
 
 
-def call_jsonify(value) -> JSON | NoChange:
+def call_jsonify(value) -> JSON:
     """
     Call jsonify, using optimised paths for the native JSON types.
-    Returns NOCHANGE if the result is the same as the argument.
     """
 
     if type(value) in native_types:
-        return NOCHANGE
+        return value
     elif type(value) is list:
         return jsonify_list(value)
     elif type(value) is dict:
@@ -154,7 +139,7 @@ def call_jsonify(value) -> JSON | NoChange:
         return generic_jsonify(value)
 
 
-def call_jsonify_as_type(value, as_type: type) -> JSON | NoChange:
+def call_jsonify_as_type(value, as_type: type) -> JSON:
 
     # this could be combined with call_jsonify, but it seems that
     # complicating call_jsonify has suprisingly big impact on
@@ -164,7 +149,7 @@ def call_jsonify_as_type(value, as_type: type) -> JSON | NoChange:
         raise TypeError(f"Cannot jsonify {value} as {as_type}")
 
     if as_type in native_types:
-        return NOCHANGE
+        return value
     elif as_type is list:
         return jsonify_list(value)
     elif as_type is dict:
@@ -179,16 +164,14 @@ class Jsonify:
         """
         Jsonify any value that supports jsonification.
         """
-        result = call_jsonify(value)
-        return value if result is NOCHANGE else result
+        return call_jsonify(value)
 
     def call_as_type(self, value, as_type: type) -> JSON:
         """
         Jsonify any value that supports jsonification, dispatching
         on the given type.
         """
-        result = call_jsonify_as_type(value, as_type)
-        return value if result is NOCHANGE else result
+        return call_jsonify_as_type(value, as_type)
 
     def __getitem__(self, type_):
         return lambda value: jsonify.call_as_type(value, type_)
