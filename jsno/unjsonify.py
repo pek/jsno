@@ -7,7 +7,7 @@ import types
 
 
 from collections.abc import ByteString, Mapping, Sequence, Set
-from typing import Any, Union
+from typing import Any, Union, Literal
 
 
 from jsno.utils import get_origin, get_args
@@ -99,6 +99,14 @@ def unjsonify_variantclass(value, as_type, variantclass):
     return unjsonify._dispatch(variant_type)(value)
 
 
+def unjsonify_literal(value, as_type):
+    options = get_args(as_type)
+
+    if value in options:
+        return value
+
+    raise_error(value, as_type)
+
 class Unjsonify:
 
     def _dispatch(self, type_):
@@ -109,6 +117,8 @@ class Unjsonify:
             # special case needed, as singledispatch fails cannot handle
             # typing.Union
             func = unjsonify_union
+        elif origin is Literal:
+            func = unjsonify_literal
         else:
             func = unjsonify_type.dispatch(origin)
 

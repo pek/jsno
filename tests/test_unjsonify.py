@@ -3,7 +3,7 @@ import datetime
 import pytest
 import zoneinfo
 
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from jsno.unjsonify import unjsonify, UnjsonifyError
 
@@ -96,6 +96,15 @@ def test_unjsonify_list_of_option_types():
     assert unjsonify[list[str | None]](["Yes", None, "No"]) == ["Yes", None, "No"]
 
 
+def test_unjsonify_literal():
+    assert unjsonify[Literal["A", "B"]]("B") == "B"
+
+
+def test_unjsonify_literal_failure():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Literal["A", "B"]]("C")
+
+
 def test_unjsonify_list_of_datetimes():
     assert (
         unjsonify[list[datetime.datetime]](
@@ -143,4 +152,5 @@ def test_unjsonify_datetime_failure():
 
 def test_unjsonify_bytes():
     assert unjsonify[bytes]("Zm9vYmFyIQ==") == b"foobar!"
+
 
