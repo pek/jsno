@@ -51,7 +51,7 @@ def get_variantclass(cls : type) -> VariantClass | None:
         return None
 
 
-def variantclass(label: str = 'label') -> Callable[type, type]:
+def variantclass(label: str = 'label') -> Callable[[type], type]:
     """
     Decorator for marking the root of a variant family.
     """
@@ -68,13 +68,18 @@ def variantclass(label: str = 'label') -> Callable[type, type]:
     return decorator
 
 
-def variantlabel(label: str) -> Callable[type, type]:
+def variantlabel(label: str) -> Callable[[type], type]:
     """
     Decorator for specifying the variant label of a class
     """
 
     def decorator(cls: type) -> type:
-        get_variantclass(cls).label_for_class[cls] = label
+        variantclass = get_variantclass(cls)
+        if not variantclass:
+            raise TypeError(f"Not a variantclass: {cls}")
+
+        variantclass.label_for_class[cls] = label
         return cls
+
 
     return decorator
