@@ -6,8 +6,9 @@ import sys
 
 from jsno import jsonify, dumps, unjsonify
 from performance.utils import measure_time
-from performance.dataclasses import example_box, Box
 from tests.test_variant import Expression, expr
+from tests.test_dataclasses import Box, Brick, Color, Material
+
 
 
 def measure_case(n, item, as_type):
@@ -123,7 +124,16 @@ def main(n=10000):
             n,
             {
                 "name": "Containing dataclass",
-                "box": example_box,
+                "box":   Box(
+                    name="Example box",
+                    width=100.1,
+                    height=99.8,
+                    bricks=[
+                        Brick(width=3, height=2, color=color, material=material)
+                        for color in Color
+                        for material in list(Material) + [None]
+                    ]
+                ),
             },
             as_type=Item3
         )

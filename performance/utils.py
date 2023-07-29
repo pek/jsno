@@ -19,4 +19,3 @@ def measure_time(label=None):
 
         if label:
             print(f'{label} in {result.total:.2f} milliseconds')
-
