@@ -7,6 +7,12 @@ import pytest
 from jsno import jsonify, unjsonify, UnjsonifyError, jsonify_as_string
 
 
+def run_tests(value, json):
+    assert jsonify(value) == json
+    assert unjsonify[type(value)](json) == value
+
+
+
 def test_jsonify_decimal():
     assert jsonify(decimal.Decimal("99.9")) == "99.9"
 
@@ -56,3 +62,12 @@ def test_jsonify_as_string_failure():
     with pytest.raises(zoneinfo.ZoneInfoNotFoundError):
         unjsonify[ZoneInfoSub]("Europe/Vantaa")
 
+
+def test_jsonify_range():
+    run_tests(range(100), {"start": 0, "stop": 100})
+    run_tests(range(10, 0,-1), {"start": 10, "stop": 0, "step": -1})
+
+
+def test_jsonify_range_failure():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[range]({"start": 1, "stop": 6, "step": 0})

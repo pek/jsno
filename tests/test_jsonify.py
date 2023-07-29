@@ -26,8 +26,12 @@ def test_jsonify_int():
 def test_jsonify_tuple():
     assert jsonify(("x", 1, datetime.date(2023, 7, 15))) == ["x", 1, "2023-07-15"]
 
-def test_jsonify_se():
+def test_jsonify_set():
     assert jsonify(set("abababa")) == ["a", "b"]
+
+
+def test_jsonify_fonzenset():
+    assert jsonify(frozenset("abababa")) == ["a", "b"]
 
 
 def test_jsonify_dict():

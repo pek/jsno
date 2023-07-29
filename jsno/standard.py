@@ -5,11 +5,14 @@ Jsonification and unjsonification for standard Python types.
 * datetime.date
 * decimal.Decimal
 * pathlib.Path
+* zoneinfo.ZoneInfo
 * enum.Enum
-# tuples
+* tuples
+* ranges
 
 """
 
+import dataclasses
 import datetime
 import decimal
 import enum
@@ -234,3 +237,33 @@ def _(value, as_type):
 # pathlib.Path
 
 jsonify_as_string(pathlib.Path)
+
+# complex numbers
+
+jsonify_as_string(complex)
+
+
+
+@jsonify.register(range)
+def _(value):
+    result = {"start": value.start, "stop": value.stop}
+    if value.step != 1:
+        result["step"] = value.step
+    return result
+
+
+@dataclasses.dataclass
+class Range:
+    start: int
+    stop: int
+    step: int | None = None
+
+
+@unjsonify.register(range)
+def _(value, as_type):
+    it = unjsonify[Range](value)
+    if it.step == 0:
+        raise_error(value, as_type, "Range step must not be zero")
+
+    return as_type(it.start, it.stop, it.step or 1)
+

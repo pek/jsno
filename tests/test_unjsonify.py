@@ -59,6 +59,10 @@ def test_unjsonify_set_of_ints():
     assert unjsonify[set[int]]([2, 3, 4, 102]) == set((2, 3, 4, 102))
 
 
+def test_unjsonify_frozenset_of_ints():
+    assert unjsonify[frozenset[int]]([2, 3, 4, 102]) == frozenset((2, 3, 4, 102))
+
+
 def test_unjsonify_list_of_bools_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[list[bool]]([True, 120])
@@ -161,7 +165,6 @@ def test_unjsonify_datetime_failure():
 
 def test_unjsonify_bytes():
     assert unjsonify[bytes]("Zm9vYmFyIQ==") == b"foobar!"
-
 
 
 def test_unjsonify_str_subclass():

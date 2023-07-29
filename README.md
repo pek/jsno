@@ -101,8 +101,10 @@ _variant family_.
 ## Other standard Python types
 
 * tuples
+* ranges
 * enums
 * date and datetime objects (converted to ISO-formatted strings)
 * decimals (converted to JSON strings)
 * pathlib.Path
+* zoneinfo.ZoneInfo
 * Literal (only int and str literals)
