@@ -1,9 +1,16 @@
-DEV.md
+=== Development commands
 
 Run tests with coverage:
 
 ```bash
 > coverage run -m pytest -s && coverage report -m 
+```
+
+Check code with mypy and flake
+
+```bash
+> mypy jsno
+> flake8
 ```
 
 Build and publish:
@@ -19,3 +26,5 @@ Run performance benchmarks:
 
 > python -m performance.measure_jsonify
 
+
+```
