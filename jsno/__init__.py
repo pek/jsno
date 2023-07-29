@@ -40,4 +40,4 @@ from jsno.variant import get_variantfamily, variantfamily, variantlabel
 import jsno.abc
 
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"

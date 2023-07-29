@@ -69,13 +69,9 @@ def unjsonify_dataclass(value, as_type):
     # collect all properties in the input value that match any of
     # the dataclass fields
     kwargs = {
-        field.name:  unjsonify[field.type](value.get(field.name))
+        field.name: unjsonify[field.type](value.get(field.name))
         for field in get_dataclass_fields(as_type)
-        if (
-            field.name in value or
-            field.default is not dataclasses.MISSING or
-            field.default_factory is not dataclasses.MISSING
-        )
+        if field.name in value
     }
     try:
         return as_type(**kwargs)
@@ -163,4 +159,3 @@ def unjsonify_union(value, as_type):
 def _(value, as_type):
     """ Unjsonify Any type: just return the value """
     return value
-

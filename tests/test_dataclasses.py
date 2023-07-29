@@ -154,3 +154,22 @@ def test_unjsonify_dataclass_error():
     with pytest.raises(UnjsonifyError):
         unjsonify[Box]({})
 
+
+@dataclasses.dataclass
+class User:
+    username: str
+    password: str = 'pAssW0rd'
+
+
+def test_jsonifty_dataclass_with_default_value():
+    assert (
+        jsonify(User(username="usr")) ==
+        {"username": "usr", "password": "pAssW0rd"}
+    )
+
+
+def test_unjsonifty_dataclass_with_default_value():
+    user = unjsonify[User]({"username": "usr"})
+
+    assert user == User(username="usr")
+    assert user.password == "pAssW0rd"
