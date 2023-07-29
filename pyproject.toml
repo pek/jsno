@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsno"
-version = "1.0.2"
+version = "1.0.3"
 description = "Convert Python data to and from json-compatible data structures"
 readme = "README.md"
 authors = [{ name = "Pekka Uronen", email = "pekka.uronen@gmail.com" }]

@@ -7,6 +7,7 @@ import dataclasses
 import enum
 import pytest
 
+from typing import Any, Dict, List
 
 from jsno import jsonify, unjsonify, jsonify_with_method, UnjsonifyError
 
@@ -159,12 +160,18 @@ def test_unjsonify_dataclass_error():
 class User:
     username: str
     password: str = 'pAssW0rd'
+    metadata: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
 
 
 def test_jsonifty_dataclass_with_default_value():
     assert (
         jsonify(User(username="usr")) ==
-        {"username": "usr", "password": "pAssW0rd"}
+        {"username": "usr", "password": "pAssW0rd", "metadata": []}
+    )
+
+    assert (
+        jsonify(User(username="usr", password="", metadata=[{"key": 100}])) ==
+        {"username": "usr", "password": "", "metadata": [{"key": 100}]}
     )
 
 
@@ -173,3 +180,8 @@ def test_unjsonifty_dataclass_with_default_value():
 
     assert user == User(username="usr")
     assert user.password == "pAssW0rd"
+
+    user = unjsonify[User]({"username": "usr", "password": "", "metadata":  [{"key": 100}]})
+
+    assert user == User(username="usr", password="", metadata=[{"key": 100}])
+

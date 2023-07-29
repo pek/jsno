@@ -8,7 +8,7 @@ from collections.abc import ByteString, Mapping, Sequence, Set
 
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
-from jsno.utils import get_args
+from jsno.utils import get_args, get_origin
 
 
 # Mapping
@@ -29,12 +29,17 @@ def _(value, as_type):
     typecheck(value, dict, as_type)
 
     arg_types = get_args(as_type)
+
+    # need to take origin for this to work for Dict and List
+    origin = get_origin(as_type) or as_type
+
     if not arg_types:
-        return cast(value, as_type)
+        return cast(value, origin)
     else:
         unjsonify_key = unjsonify[arg_types[0]]
         unjsonify_val = unjsonify[arg_types[1]]
-        return as_type({
+
+        return origin({
             unjsonify_key(key): unjsonify_val(val)
             for (key, val) in value.items()
         })
