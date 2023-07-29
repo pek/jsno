@@ -66,6 +66,7 @@ def unjsonify_sequence(value, as_type):
 
 # Set
 
+
 @jsonify.register(Set)
 def _(value):
     """
@@ -91,7 +92,7 @@ unjsonify.register(Set)(unjsonify_sequence)
 
 @jsonify.register(ByteString)
 def _(value):
-    return base64.b64encode(value).decode('ascii')
+    return base64.b64encode(value).decode("ascii")
 
 
 @unjsonify.register(ByteString)
@@ -99,7 +100,7 @@ def _(value, as_type):
     typecheck(value, str, as_type)
 
     try:
-        return base64.b64decode(value.encode('ascii'))
+        return base64.b64decode(value.encode("ascii"))
     except ValueError as exc:
         detail = exc.args[0]
 

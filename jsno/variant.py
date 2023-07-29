@@ -38,7 +38,7 @@ class VariantFamily:
             return cls
 
         for sub in cls.__subclasses__():
-            if (it := self._search_variant(label, sub)):
+            if it := self._search_variant(label, sub):
                 return it
 
         return None
@@ -81,7 +81,7 @@ def get_variantfamily(cls: type) -> VariantFamily | None:
     return _get_variantfamily.dispatch(cls)(None)
 
 
-def variantfamily(label: str = 'label') -> Callable[[type], type]:
+def variantfamily(label: str = "label") -> Callable[[type], type]:
     """
     Decorator for marking the root of a variant family.
     """

@@ -52,7 +52,6 @@ def cast(value: Any, as_type: Any) -> Any:
 
 @functools.singledispatch
 def unjsonify_type(value, as_type):
-
     if dataclasses.is_dataclass(as_type):
         return unjsonify_dataclass(value, as_type)
 
@@ -103,7 +102,6 @@ def unjsonify_literal(value, as_type):
 
 
 class Unjsonify:
-
     def _dispatch(self, type_):
 
         origin = get_origin(type_) or type_
@@ -123,8 +121,7 @@ class Unjsonify:
         return lambda value: func(value, type_)
 
     def __getitem__(self, type_):
-
-        if (isinstance(type_, type) and (family := get_variantfamily(type_))):
+        if isinstance(type_, type) and (family := get_variantfamily(type_)):
             return lambda value: unjsonify_variant(value, type_, family)
 
         return self._dispatch(type_)
@@ -154,5 +151,5 @@ def unjsonify_union(value, as_type):
 
 @unjsonify.register(Any)
 def _(value, as_type):
-    """ Unjsonify Any type: just return the value """
+    """Unjsonify Any type: just return the value"""
     return value

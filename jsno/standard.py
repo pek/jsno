@@ -30,6 +30,7 @@ from jsno.utils import get_args
 
 # marking types to be jsonified as strings
 
+
 def jsonify_to_string(value):
     return str(value)
 
@@ -167,14 +168,14 @@ def _(value, as_type):
 
 @jsonify.register(datetime.date)
 def _(date):
-    return f'{date.year}-{date.month:02}-{date.day:02}'
+    return f"{date.year}-{date.month:02}-{date.day:02}"
 
 
 @unjsonify.register(datetime.date)
 def _(value, as_type):
     typecheck(value, str, as_type)
     try:
-        (ys, ms, ds) = value.split('-')
+        (ys, ms, ds) = value.split("-")
         return as_type(int(ys), int(ms), int(ds))
     except ValueError as exc:
         detail = exc.args[0]

@@ -5,8 +5,8 @@ import typing
 
 
 union_types = (
-    typing.Union,   # Union[X] or Optional[X]
-    types.UnionType  # X | Y or X | None
+    typing.Union,  # Union[X] or Optional[X]
+    types.UnionType,  # X | Y or X | None
 )
 
 
@@ -28,7 +28,9 @@ def get_args(type):
 
 @functools.cache
 def get_dataclass_fields(cls: type):
-    """ Cache dataclass fields for speed """
+    """
+    Cache dataclass fields for speed
+    """
     return dataclasses.fields(cls)
 
 

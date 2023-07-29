@@ -18,7 +18,7 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
     result: dict[str, JSON] = {}
     value_type: type = type(value)
 
-    if (family := get_variantfamily(value_type)):
+    if family := get_variantfamily(value_type):
         # if the value's class is a member of a variant family,
         # first add the variant label to the jsonified result
         result[family.label_name] = family.get_label(value_type)
@@ -154,6 +154,9 @@ def call_jsonify_as_type(value, as_type: type) -> JSON:
 
 
 class Jsonify:
+    """
+    Singleton type for the jsonify function
+    """
 
     def __call__(self, value) -> JSON:
         """
