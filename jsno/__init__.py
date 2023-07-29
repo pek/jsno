@@ -38,7 +38,7 @@ from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
 from jsno.standard import jsonify_as_string
 from jsno.unjsonify import unjsonify, UnjsonifyError
-from jsno.variant import get_variantfamily, variantfamily, variantlabel
+from jsno.variant import get_variantfamily, variantfamily, variantlabel, VariantFamily
 
 # import to register jsonifiers
 import jsno.abc  # noqa
@@ -57,4 +57,5 @@ __all__ = [
     "variantfamily",
     "variantlabel",
     "UnjsonifyError",
+    "variantfamily",
 ]

@@ -10,9 +10,18 @@ from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify
 
 
-def dumps(value, **kwargs):
+def dumps(value, **kwargs) -> str:
+    """
+    Turn the argument into JSON. First jsonifies it and then calls
+    the standard json.dumps with the result.
+    """
+
     return json.dumps(jsonify(value), **kwargs)
 
 
-def loads(value, as_type, **kwargs):
-    return unjsonify[as_type](json.loads(value, **kwargs))
+def loads(arg: str, as_type, **kwargs):
+    """
+    Load a value of given type from a JSON-encoded string.
+    """
+
+    return unjsonify[as_type](json.loads(arg, **kwargs))

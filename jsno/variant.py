@@ -8,12 +8,12 @@ class VariantFamily:
     VariantFamily represents a variant class hierarchy.
     """
 
-    def __init__(self, root_class, label_name: str):
+    def __init__(self, root_class: type, label_name: str):
         self.root_class = root_class
         self.label_name = label_name
 
-        self._label_for_class = {}
-        self._class_for_label = {}
+        self._label_for_class: dict[type, str] = {}
+        self._class_for_label: dict[str, type | None] = {}
 
     def get_variant(self, label: str) -> type | None:
         """
@@ -73,7 +73,7 @@ def _get_variantfamily(cls: type) -> VariantFamily | None:
     return None
 
 
-def get_variantfamily(cls: type) -> VariantFamily:
+def get_variantfamily(cls: type) -> VariantFamily | None:
     """
     Get the variant family that the argument type is part of, or
     None if it is not part of any.

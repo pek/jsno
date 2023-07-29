@@ -15,14 +15,15 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
     """
     Jsonify a value whose type is a dataclass.
     """
-    result = {}
+    result: dict[str, JSON] = {}
+    value_type: type = type(value)
 
-    if (family := get_variantfamily(type(value))):
+    if (family := get_variantfamily(value_type)):
         # if the value's class is a member of a variant family,
         # first add the variant label to the jsonified result
-        result[family.label_name] = family.get_label(type(value))
+        result[family.label_name] = family.get_label(value_type)
 
-    for field in get_dataclass_fields(type(value)):
+    for field in get_dataclass_fields(value_type):
         val = getattr(value, field.name)
 
         # skip optional values that are None

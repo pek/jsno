@@ -27,7 +27,7 @@ def get_args(type):
 
 
 @functools.cache
-def get_dataclass_fields(cls):
+def get_dataclass_fields(cls: type):
     """ Cache dataclass fields for speed """
     return dataclasses.fields(cls)
 
