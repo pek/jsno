@@ -108,7 +108,7 @@ def _(value):
 
 @unjsonify.register(float)
 def _(value, as_type):
-    typecheck(value, float, as_type)
+    typecheck(value, (float, int), as_type)
     return cast(value, as_type)
 
 
