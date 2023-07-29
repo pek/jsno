@@ -187,6 +187,13 @@ def _(value, as_type):
 UTC = zoneinfo.ZoneInfo("UTC")
 
 
+def is_utc_datetime(dt) -> bool:
+    return (
+        dt.tzinfo is not None and
+        dt.tzinfo.utcoffset(dt).total_seconds() == 0.0
+    )
+
+
 @jsonify.register(datetime.datetime)
 def _(value):
     """
@@ -194,7 +201,7 @@ def _(value):
     the timezone is UTC, attaches "Z" as the timezone, instead of "+00:00"
     """
 
-    if value.tzinfo == UTC:
+    if is_utc_datetime(value):
         return f"{value.date()}T{value.time()}Z"
     else:
         return value.isoformat()

@@ -12,7 +12,6 @@ def run_tests(value, json):
     assert unjsonify[type(value)](json) == value
 
 
-
 def test_jsonify_decimal():
     assert jsonify(decimal.Decimal("99.9")) == "99.9"
 
