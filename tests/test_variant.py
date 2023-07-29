@@ -119,7 +119,7 @@ def test_variantlabel_error():
             pass
 
 
-def test_variantfamily_overlap_error():
+def test_variant_family_overlap_error():
 
     with pytest.raises(ValueError):
         @variantfamily(label='type')
@@ -127,3 +127,9 @@ def test_variantfamily_overlap_error():
             pass
 
 
+def test_variant_label_overlap_error():
+
+    with pytest.raises(ValueError):
+        @variantlabel(label='NOT')
+        class NotAgain(Expression):
+            pass

@@ -42,6 +42,16 @@ class VariantFamily:
         """
         return self.label_for_class.get(cls) or cls.__name__
 
+    def register_variant(self, cls: type, label: str):
+        """
+        Register a new variant to be found using the given label.
+        """
+
+        if self.get_variant(label) is not None:
+            raise ValueError(f"Variant with the label '{label}' already registered")
+
+        self.label_for_class[cls] = label
+
 
 @functools.singledispatch
 def _get_variantfamily(cls: type) -> VariantFamily | None:
@@ -96,7 +106,7 @@ def variantlabel(label: str) -> Callable[[type], type]:
         if not family:
             raise TypeError(f"Not member of a variant family: {cls}")
 
-        family.label_for_class[cls] = label
+        family.register_variant(cls, label)
         return cls
 
 
