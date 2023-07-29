@@ -57,5 +57,5 @@ __all__ = [
     "variantfamily",
     "variantlabel",
     "UnjsonifyError",
-    "variantfamily",
+    "VariantFamily",
 ]
