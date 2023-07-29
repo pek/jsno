@@ -157,3 +157,10 @@ def unjsonify_union(value, as_type):
             continue
 
     raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value)
+
+
+@unjsonify.register(Any)
+def _(value, as_type):
+    """ Unjsonify Any type: just return the value """
+    return value
+

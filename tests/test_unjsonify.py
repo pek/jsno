@@ -3,7 +3,7 @@ import datetime
 import pytest
 import zoneinfo
 
-from typing import Callable, Optional, List, Literal
+from typing import Any, Callable, Optional, List, Literal
 
 from jsno.unjsonify import unjsonify, UnjsonifyError
 
@@ -14,6 +14,10 @@ utc = zoneinfo.ZoneInfo("UTC")
 
 def test_unjsonify_none():
     assert unjsonify[type(None)](None) == None
+
+
+def test_unjsonify_any():
+    assert unjsonify[Any](None) == None
 
 
 def test_unjsonify_none_from_string_fails():
