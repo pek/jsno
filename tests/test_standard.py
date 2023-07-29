@@ -1,9 +1,10 @@
 import decimal
 import pathlib
+import zoneinfo
 
 import pytest
 
-from jsno import jsonify, unjsonify, UnjsonifyError
+from jsno import jsonify, unjsonify, UnjsonifyError, jsonify_as_string
 
 
 def test_jsonify_decimal():
@@ -24,4 +25,34 @@ def test_jsonify_path():
 
 def test_unjsonify_path():
     assert unjsonify[pathlib.Path]("/dev/null")  == pathlib.Path("/dev/null")
+
+
+def test_jsonify_zoneinfo():
+    assert (
+        jsonify(zoneinfo.ZoneInfo("Europe/Helsinki")) ==
+        "Europe/Helsinki"
+    )
+
+
+def test_unjsonify_zoneinfo():
+    assert (
+        unjsonify[zoneinfo.ZoneInfo]("Europe/Helsinki") ==
+        zoneinfo.ZoneInfo("Europe/Helsinki")
+    )
+
+
+def test_unjsonify_zoneinfo_failure():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[zoneinfo.ZoneInfo]("Europe/Vantaa")
+
+
+def test_jsonify_as_string_failure():
+
+    class ZoneInfoSub(zoneinfo.ZoneInfo):
+        pass
+
+    jsonify_as_string(ZoneInfoSub, exceptions=(TypeError,))
+
+    with pytest.raises(zoneinfo.ZoneInfoNotFoundError):
+        unjsonify[ZoneInfoSub]("Europe/Vantaa")
 

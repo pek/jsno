@@ -36,9 +36,27 @@ def unjsonify_from_string(value, as_type):
     return cast(value, as_type)
 
 
-def jsonify_as_string(type_):
+def jsonify_as_string(type_, exceptions=()):
     jsonify.register(type_)(jsonify_to_string)
-    unjsonify.register(type_)(unjsonify_from_string)
+
+    if exceptions:
+
+        @unjsonify.register(type_)
+        def _(value, as_type):
+            typecheck(value, str, as_type)
+            try:
+                return cast(value, as_type)
+            except Exception as exc:
+                if not isinstance(exc, exceptions):
+                    raise
+
+                detail = exc.args[0]
+
+            raise_error(value, as_type, detail)
+
+    else:
+        unjsonify.register(type_)(unjsonify_from_string)
+
     return type_
 
 
@@ -188,6 +206,11 @@ def _(value, as_type):
         detail = exc.args[0]
 
     raise_error(value, as_type, detail)
+
+
+# zoneinfo
+
+jsonify_as_string(zoneinfo.ZoneInfo, exceptions=(zoneinfo.ZoneInfoNotFoundError))
 
 
 # decimal
