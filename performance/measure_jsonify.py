@@ -42,6 +42,7 @@ def main(n=10000):
 
     for _ in range(3):
         print()
+        print(f'N = {n}')
 
         measure_case(n, {
             "name": "Pure JSON",
