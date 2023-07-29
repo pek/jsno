@@ -38,3 +38,6 @@ from jsno.unjsonify import unjsonify, UnjsonifyError
 from jsno.variant import get_variantfamily, variantfamily, variantlabel
 
 import jsno.abc
+
+
+__version__ = "1.0.0"
