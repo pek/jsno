@@ -1,5 +1,12 @@
 """
 Jsonification and unjsonification for standard Python types.
+
+* datetime.datetime
+* datetime.date
+* decimal.Decimal
+* enum.Enum
+# tuples
+
 """
 
 import datetime
@@ -89,8 +96,12 @@ def _(value, as_type):
     """
 
     arg_types = get_args(as_type)
-    if arg_types and len(arg_types) < 2:
+    if arg_types and len(arg_types) == 2 and arg_types[1] is Ellipsis:
+        # special case for a N-length one-type tuple (tuple[T, ...])
+        # note: this accepts the empty tuple. This might not be strictly allowed
         return unjsonify_sequence(value, as_type)
+
+    # tuple types of the form tuple[int, str, ...] are not supported now
 
     typecheck(value, list, as_type)
 

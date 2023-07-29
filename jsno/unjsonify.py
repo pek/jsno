@@ -19,7 +19,7 @@ class UnjsonifyError(TypeError):
 
 
 def raise_error(value: Any, as_type: Any, detail=None):
-    raise UnjsonifyError(f"Cannot unjsonify as {as_type.__name__}", value, detail)
+    raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value, detail)
 
 
 def typecheck(value: Any, jsontype: type, as_type: Any) -> None:

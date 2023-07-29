@@ -64,8 +64,17 @@ def test_unjsonify_list_of_bools_failure():
         unjsonify[list[bool]]([True, 120])
 
 
-def test_unjsonify_single_typearg_tuple():
-    assert unjsonify[tuple[float]]([1.0, 2.0, 3.0]) == (1, 2, 3.0)
+def test_unjsonify_n_ary_tuple():
+    assert unjsonify[tuple[float, ...]]([1.0, 2.0, 3.0]) == (1, 2, 3.0)
+
+
+def test_unjsonify_empty_tuple():
+    assert unjsonify[tuple[()]]([]) == ()
+
+
+def test_unjsonify_malformed_type_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[tuple[bool, str, ...]]([True, "x"])
 
 
 def test_unjsonify_multiple_typearg_tuple():
