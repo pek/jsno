@@ -1,4 +1,5 @@
 import decimal
+import pathlib
 
 import pytest
 
@@ -15,3 +16,12 @@ def test_unjsonify_decimal():
 
 def test_unjsonify_decimal_from_int():
     assert unjsonify[decimal.Decimal](100) == decimal.Decimal("100")
+
+
+def test_jsonify_path():
+    assert jsonify(pathlib.Path("/dev/null")) == "/dev/null"
+
+
+def test_unjsonify_path():
+    assert unjsonify[pathlib.Path]("/dev/null")  == pathlib.Path("/dev/null")
+

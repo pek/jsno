@@ -4,6 +4,7 @@ Jsonification and unjsonification for standard Python types.
 * datetime.datetime
 * datetime.date
 * decimal.Decimal
+* pathlib.Path
 * enum.Enum
 # tuples
 
@@ -12,6 +13,7 @@ Jsonification and unjsonification for standard Python types.
 import datetime
 import decimal
 import enum
+import pathlib
 import zoneinfo
 
 from types import NoneType
@@ -21,6 +23,23 @@ from jsno.abc import unjsonify_sequence
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
 from jsno.utils import get_args
+
+
+# marking types to be jsonified as strings
+
+def jsonify_to_string(value):
+    return str(value)
+
+
+def unjsonify_from_string(value, as_type):
+    typecheck(value, str, as_type)
+    return cast(value, as_type)
+
+
+def jsonify_as_string(type_):
+    jsonify.register(type_)(jsonify_to_string)
+    unjsonify.register(type_)(unjsonify_from_string)
+    return type_
 
 
 # NoneType, jsonify is not needed
@@ -33,17 +52,7 @@ def _(value, as_type):
 
 # str
 
-
-@jsonify.register(str)
-def _(value):
-    return str(value)
-
-
-@unjsonify.register(str)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    return cast(value, as_type)
-
+jsonify_as_string(str)
 
 # bool, jsonify is not needed
 
@@ -197,3 +206,8 @@ def _(value, as_type):
     typecheck(value, (str, int), as_type)
 
     return as_type(value)
+
+
+# pathlib.Path
+
+jsonify_as_string(pathlib.Path)

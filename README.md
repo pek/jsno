@@ -104,4 +104,5 @@ _variant family_.
 * enums
 * date and datetime objects (converted to ISO-formatted strings)
 * decimals (converted to JSON strings)
+* pathlib.Path
 * Literal (only int and str literals)
