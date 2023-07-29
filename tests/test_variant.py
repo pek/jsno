@@ -117,3 +117,13 @@ def test_variantlabel_error():
         @variantlabel('not-a-variant')
         class Foo:
             pass
+
+
+def test_variantfamily_overlap_error():
+
+    with pytest.raises(ValueError):
+        @variantfamily(label='type')
+        class DoesNowWork(Not):
+            pass
+
+

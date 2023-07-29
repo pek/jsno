@@ -54,7 +54,8 @@ def _get_variantfamily(cls: type) -> VariantFamily | None:
 
 def get_variantfamily(cls : type) -> VariantFamily:
     """
-    Get the variant family that the argument type is part of.
+    Get the variant family that the argument type is part of, or
+    None if it is not part of any.
     """
     return _get_variantfamily.dispatch(cls)(None)
 
@@ -65,6 +66,15 @@ def variantfamily(label: str = 'label') -> Callable[[type], type]:
     """
 
     def decorator(cls: type) -> type:
+
+        # make sure that the class is not already part of a variant
+        # family, e.g. through a superclass
+        if (family := get_variantfamily(cls)) is not None:
+            raise ValueError(
+                f"Class {cls} is already a member of"
+                f"a variant family {family}"
+            )
+
         family = VariantFamily(cls, label)
 
         @_get_variantfamily.register(cls)
