@@ -7,6 +7,7 @@ import sys
 from jsno import jsonify, dumps, unjsonify
 from performance.utils import measure_time
 from performance.dataclasses import example_box, Box
+from tests.test_variant import Expression, expr
 
 
 def measure_case(n, item, as_type):
@@ -34,18 +35,15 @@ def measure_case(n, item, as_type):
     with measure_time() as unjsonify_time:
          unjsonify[Items](loaded)
 
-    # microseconds per item
+    jsonify_per_ms = (n / jsonify_time.total * 1000)
+    dump_per_ms = (n / dump_time.total * 1000)
     loads_per_ms = (n / loads_time.total * 1000)
     unjsonify_per_ms = (n / unjsonify_time.total * 1000)
 
-    loads_bytes_per_ms = (bytecount / loads_time.total)
-    unjsonify_bytes_per_ms = (bytecount / unjsonify_time.total)
-
-    jsonify_per_ms = (n / jsonify_time.total * 1000)
-    dump_per_ms = (n / dump_time.total * 1000)
-
     jsonify_bytes_per_ms = (len(dump) / jsonify_time.total)
     dump_bytes_per_ms = (len(dump) / dump_time.total)
+    loads_bytes_per_ms = (bytecount / loads_time.total)
+    unjsonify_bytes_per_ms = (bytecount / unjsonify_time.total)
 
     print(
         f'{name:<28} ({bytecount:>8} bytes)'
@@ -129,6 +127,21 @@ def main(n=10000):
             },
             as_type=Item3
         )
+
+        @dataclasses.dataclass
+        class Item4:
+            name: str
+            expression: Expression
+
+        measure_case(
+            n,
+            {
+                "name": "Containing variants",
+                "expression": expr,
+            },
+            as_type=Item4
+        )
+
 
 
 if __name__ == '__main__':
