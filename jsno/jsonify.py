@@ -11,13 +11,11 @@ valid JSON types.
 JSON = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
 
 
-
 def jsonify_dataclass(value) -> dict[str, JSON]:
     """
     Jsonify a value whose type is a dataclass.
     """
     result = {}
-
 
     if (family := get_variantfamily(type(value))):
         # if the value's class is a member of a variant family,
@@ -65,7 +63,6 @@ def jsonify_list(value: list) -> list[JSON]:
                 ix += 1
                 break
             ix += 1
-
 
     while ix < count:
         val_json = call_jsonify(value[ix])

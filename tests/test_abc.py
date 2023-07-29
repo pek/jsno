@@ -27,6 +27,10 @@ def test_unjsonify_mapping():
     assert userdict == dc
 
 
+def test_unjsonify_untyped_dict():
+    assert unjsonify[dict]({"foo": 123}) == {"foo": 123}
+
+
 def test_unjsonify_bytestring_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[bytes]("foo")

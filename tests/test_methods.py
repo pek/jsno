@@ -49,6 +49,7 @@ def test_overriding_with_unjsonify_method():
         NamedList([1, 2, 3], name="List")
     )
 
+
 class RenamedList(NamedList):
     """
     Subclass of NmedList, to be registered with custom jsonification

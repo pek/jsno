@@ -12,3 +12,10 @@ Build and publish:
 > python -m build                                 
 > twine upload -r pypi dist/*
 ```
+
+Run performance benchmarks:
+
+```bash
+
+> python -m performance.measure_jsonify
+

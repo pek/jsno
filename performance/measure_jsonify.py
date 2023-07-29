@@ -4,11 +4,10 @@ import json
 import sys
 
 
-from jsno import jsonify, dumps, unjsonify
+from jsno import jsonify, unjsonify
 from performance.utils import measure_time
 from tests.test_variant import Expression, expr
 from tests.test_dataclasses import Box, Brick, Color, Material
-
 
 
 def measure_case(n, item, as_type):
@@ -34,7 +33,7 @@ def measure_case(n, item, as_type):
         items: list[as_type]
 
     with measure_time() as unjsonify_time:
-         unjsonify[Items](loaded)
+        unjsonify[Items](loaded)
 
     jsonify_per_ms = (n / jsonify_time.total * 1000)
     dump_per_ms = (n / dump_time.total * 1000)
@@ -81,7 +80,6 @@ def main(n=10000):
             name: str
             subs: list[dict]
 
-
         measure_case(
             n,
             {
@@ -124,7 +122,7 @@ def main(n=10000):
             n,
             {
                 "name": "Containing dataclass",
-                "box":   Box(
+                "box": Box(
                     name="Example box",
                     width=100.1,
                     height=99.8,
@@ -153,7 +151,5 @@ def main(n=10000):
         )
 
 
-
 if __name__ == '__main__':
     main(*sys.argv[1:])
-

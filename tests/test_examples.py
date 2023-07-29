@@ -12,7 +12,6 @@ def test_domain_record_example():
         ips: list[str]
         enabled_at: date | None = None
 
-
     domains = [
         DomainRecord(
             domain="example.com",

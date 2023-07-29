@@ -8,7 +8,7 @@ from collections.abc import ByteString, Mapping, Sequence, Set
 
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
-from jsno.utils import get_args, get_origin
+from jsno.utils import get_args
 
 
 # Mapping
@@ -30,19 +30,17 @@ def _(value, as_type):
 
     arg_types = get_args(as_type)
 
-    # need to take origin for this to work for Dict and List
-    origin = get_origin(as_type) or as_type
-
     if not arg_types:
-        return cast(value, origin)
+        return cast(value, as_type)
     else:
         unjsonify_key = unjsonify[arg_types[0]]
         unjsonify_val = unjsonify[arg_types[1]]
 
-        return origin({
+        as_dict = {
             unjsonify_key(key): unjsonify_val(val)
             for (key, val) in value.items()
-        })
+        }
+        return cast(as_dict, as_type)
 
 
 # Sequence
@@ -79,10 +77,10 @@ def _(value):
     # if possible, sort the values first.
     try:
         value = sorted(value, key=lambda v: (type(v).__name__, v))
-    except:
+    except Exception:
         pass
 
-    return [jsonify(val) for val in value]
+    return jsonify_sequence(value)
 
 
 unjsonify.register(Set)(unjsonify_sequence)
@@ -106,4 +104,3 @@ def _(value, as_type):
         detail = exc.args[0]
 
     raise_error(value, as_type, detail)
-

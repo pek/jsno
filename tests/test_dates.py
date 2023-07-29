@@ -39,6 +39,7 @@ def test_jsonify_dates():
         ]
     )
 
+
 def test_jsonify_old_dates():
     assert (
         jsonify(
@@ -86,4 +87,3 @@ def test_unjsonify_datetimes():
 def test_unjsonify_datetime_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[datetime.datetime]('2023-13-13T12:34:56')
-

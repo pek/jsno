@@ -181,7 +181,6 @@ def test_unjsonifty_dataclass_with_default_value():
     assert user == User(username="usr")
     assert user.password == "pAssW0rd"
 
-    user = unjsonify[User]({"username": "usr", "password": "", "metadata":  [{"key": 100}]})
+    user = unjsonify[User]({"username": "usr", "password": "", "metadata": [{"key": 100}]})
 
     assert user == User(username="usr", password="", metadata=[{"key": 100}])
-

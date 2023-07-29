@@ -6,9 +6,8 @@ import pytest
 from jsno.jsonify import jsonify
 
 
-
 def test_jsonify_none():
-    assert jsonify(None) == None
+    assert jsonify(None) is None
 
 
 def test_jsonify_string():
@@ -21,6 +20,7 @@ def test_jsonify_int():
 
 def test_jsonify_tuple():
     assert jsonify(("x", 1, datetime.date(2023, 7, 15))) == ["x", 1, "2023-07-15"]
+
 
 def test_jsonify_set():
     assert jsonify(set("abababa")) == ["a", "b"]

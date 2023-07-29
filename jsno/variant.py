@@ -73,7 +73,7 @@ def _get_variantfamily(cls: type) -> VariantFamily | None:
     return None
 
 
-def get_variantfamily(cls : type) -> VariantFamily:
+def get_variantfamily(cls: type) -> VariantFamily:
     """
     Get the variant family that the argument type is part of, or
     None if it is not part of any.
@@ -119,6 +119,5 @@ def variantlabel(label: str) -> Callable[[type], type]:
 
         family.register_variant(cls, label)
         return cls
-
 
     return decorator

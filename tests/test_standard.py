@@ -29,7 +29,7 @@ def test_jsonify_path():
 
 
 def test_unjsonify_path():
-    assert unjsonify[pathlib.Path]("/dev/null")  == pathlib.Path("/dev/null")
+    assert unjsonify[pathlib.Path]("/dev/null") == pathlib.Path("/dev/null")
 
 
 def test_jsonify_zoneinfo():
@@ -64,7 +64,7 @@ def test_jsonify_as_string_failure():
 
 def test_jsonify_range():
     run_tests(range(100), {"start": 0, "stop": 100})
-    run_tests(range(10, 0,-1), {"start": 10, "stop": 0, "step": -1})
+    run_tests(range(10, 0, -1), {"start": 10, "stop": 0, "step": -1})
 
 
 def test_jsonify_range_failure():

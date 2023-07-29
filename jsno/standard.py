@@ -150,6 +150,7 @@ def _(value, as_type):
 def _(enum):
     return enum.name
 
+
 @unjsonify.register(enum.Enum)
 def _(value, as_type):
     typecheck(value, str, as_type)
@@ -250,7 +251,6 @@ jsonify_as_string(pathlib.Path)
 jsonify_as_string(complex)
 
 
-
 @jsonify.register(range)
 def _(value):
     result = {"start": value.start, "stop": value.stop}
@@ -273,4 +273,3 @@ def _(value, as_type):
         raise_error(value, as_type, "Range step must not be zero")
 
     return as_type(it.start, it.stop, it.step or 1)
-

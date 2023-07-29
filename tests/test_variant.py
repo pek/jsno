@@ -5,7 +5,6 @@ import pytest
 from jsno import jsonify, unjsonify, variantfamily, variantlabel, UnjsonifyError
 
 
-
 @variantfamily(label='type')
 class Expression:
     pass
@@ -58,12 +57,12 @@ expr = And(Not(Variable("x")), Or(Variable("y"), Literal(False)))
 
 
 def test_expression_evaluation():
-   assert expr.evaluate({"x": False, "y": True}) is True
-   assert expr.evaluate({"x": False, "y": False}) is False
+    assert expr.evaluate({"x": False, "y": True}) is True
+    assert expr.evaluate({"x": False, "y": False}) is False
 
 
 def test_jsonify_variant():
-    jsonified =  jsonify(expr)
+    jsonified = jsonify(expr)
 
     assert jsonified == {
         "type": "And",
@@ -105,6 +104,7 @@ def test_jsonify_variant_unknown_label_error():
 def test_jsonify_variant_no_label_error():
     with pytest.raises(UnjsonifyError):
         unjsonify[Expression]({"x-type": "Literal", "value": False})
+
 
 def test_jsonify_variant_not_dict_error():
     with pytest.raises(UnjsonifyError):

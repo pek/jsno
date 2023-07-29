@@ -13,16 +13,16 @@ utc = zoneinfo.ZoneInfo("UTC")
 
 
 def test_unjsonify_none():
-    assert unjsonify[type(None)](None) == None
+    assert unjsonify[type(None)](None) is None
 
 
 def test_unjsonify_any():
-    assert unjsonify[Any](None) == None
+    assert unjsonify[Any](None) is None
 
 
 def test_unjsonify_none_from_string_fails():
     with pytest.raises(UnjsonifyError):
-        assert unjsonify[type(None)]("foo") == None
+        assert unjsonify[type(None)]("foo") is None
 
 
 def test_unjsonify_string():
@@ -100,6 +100,7 @@ def test_unjsonify_list_of_union_types():
 
 def test_unjsonify_list_of_union_types2():
     assert unjsonify[List[int | str]](["Yes", 51, "No"]) == ["Yes", 51, "No"]
+
 
 def test_unjsonify_list_of_union_types3():
     assert unjsonify[List[list[bool] | int | str]](["Yes", 51, [True]]) == ["Yes", 51, [True]]

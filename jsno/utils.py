@@ -5,7 +5,7 @@ import typing
 
 
 union_types = (
-    typing.Union ,   # Union[X] or Optional[X]
+    typing.Union,   # Union[X] or Optional[X]
     types.UnionType  # X | Y or X | None
 )
 

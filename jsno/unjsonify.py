@@ -1,12 +1,8 @@
-import base64
 import dataclasses
-import datetime
-import enum
 import functools
 import types
 
 
-from collections.abc import ByteString, Mapping, Sequence, Set
 from typing import Any, Union, Literal
 
 
@@ -51,7 +47,7 @@ def cast(value: Any, as_type: Any) -> Any:
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type)
+    raise_error(value, as_type, detail)
 
 
 @functools.singledispatch
@@ -104,6 +100,7 @@ def unjsonify_literal(value, as_type):
         return value
 
     raise_error(value, as_type)
+
 
 class Unjsonify:
 

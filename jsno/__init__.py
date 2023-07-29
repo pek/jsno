@@ -13,9 +13,12 @@ The following types are currently supported:
     - None (null in JSON)
     - lists and tuples
     - dicts
-    - types defined as dataclass
+    - types marked as dataclass
     - enum types
     - date and datetime
+    - complex
+    - pathlib.Path
+    - decimal.Decimal
 
 Any type can be made compatible by registering custom functions for converting
 to/from a json structure. Example converters for date and datetime are provided.
@@ -37,7 +40,21 @@ from jsno.standard import jsonify_as_string
 from jsno.unjsonify import unjsonify, UnjsonifyError
 from jsno.variant import get_variantfamily, variantfamily, variantlabel
 
-import jsno.abc
+# import to register jsonifiers
+import jsno.abc  # noqa
 
 
 __version__ = "1.0.3"
+
+__all__ = [
+    "dumps",
+    "jsonify",
+    "jsonify_as_string",
+    "jsonify_with_method",
+    "get_variantfamily",
+    "loads",
+    "unjsonify",
+    "variantfamily",
+    "variantlabel",
+    "UnjsonifyError",
+]
