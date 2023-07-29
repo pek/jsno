@@ -1,9 +1,7 @@
 import dataclasses
-import datetime
 import functools
 import types
 import typing
-import zoneinfo
 
 
 union_types = (
@@ -28,6 +26,12 @@ def get_args(type):
     return typing.get_args(type)
 
 
+@functools.cache
+def get_dataclass_fields(cls):
+    """ Cache dataclass fields for speed """
+    return dataclasses.fields(cls)
+
+
 def is_optional(type_) -> bool:
     """
     Check if a type object is instance of optional type
@@ -38,18 +42,3 @@ def is_optional(type_) -> bool:
         get_origin(type_) in union_types and
         type(None) in get_args(type_)
     )
-
-
-UTC = zoneinfo.ZoneInfo("UTC")
-
-
-def format_datetime(dt: datetime.datetime) -> str:
-    """
-    Format a datetime. Uses isoformat, except when the timezone is UTC,
-    attaches "Z" as the timezone, instead of "+00:00"
-    """
-
-    if dt.tzinfo == UTC:
-        return f"{dt.date()}T{dt.time()}Z"
-    else:
-        return dt.isoformat()

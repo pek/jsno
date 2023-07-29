@@ -5,6 +5,7 @@ Jsonification and unjsonification for standard Python types.
 import datetime
 import decimal
 import enum
+import zoneinfo
 
 from types import NoneType
 
@@ -12,7 +13,7 @@ from types import NoneType
 from jsno.abc import unjsonify_sequence
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
-from jsno.utils import format_datetime, get_args
+from jsno.utils import get_args
 
 
 # NoneType, jsonify is not needed
@@ -142,9 +143,20 @@ def _(value, as_type):
 # datetime.datetime
 
 
+UTC = zoneinfo.ZoneInfo("UTC")
+
+
 @jsonify.register(datetime.datetime)
-def _(datetime):
-    return format_datetime(datetime)
+def _(value):
+    """
+    Format the datetime as a string. Uses isoformat, except  when
+    the timezone is UTC, attaches "Z" as the timezone, instead of "+00:00"
+    """
+
+    if value.tzinfo == UTC:
+        return f"{value.date()}T{value.time()}Z"
+    else:
+        return value.isoformat()
 
 
 @unjsonify.register(datetime.datetime)

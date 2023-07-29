@@ -1,7 +1,7 @@
 import dataclasses
 import functools
 
-from jsno.utils import is_optional
+from jsno.utils import is_optional, get_dataclass_fields
 from jsno.variant import get_variantfamily
 
 
@@ -9,6 +9,7 @@ from jsno.variant import get_variantfamily
 valid JSON types.
 """
 JSON = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
+
 
 
 def jsonify_dataclass(value) -> dict[str, JSON]:
@@ -23,12 +24,12 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
         # first add the variant label to the jsonified result
         result[family.label_name] = family.get_label(type(value))
 
-    for (key, val) in value.__dict__.items():
-        if (val is None and is_optional(value.__annotations__[key])):
-            # skip optional values that are None
-            continue
+    for field in get_dataclass_fields(type(value)):
+        val = getattr(value, field.name)
 
-        result[key] = jsonify(val)
+        # skip optional values that are None
+        if val is not None or not is_optional(field.type):
+            result[field.name] = jsonify(val)
 
     return result
 

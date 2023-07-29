@@ -10,7 +10,7 @@ from collections.abc import ByteString, Mapping, Sequence, Set
 from typing import Any, Union, Literal
 
 
-from jsno.utils import get_origin, get_args
+from jsno.utils import get_origin, get_args, get_dataclass_fields
 from jsno.variant import get_variantfamily
 
 
@@ -66,12 +66,14 @@ def unjsonify_type(value, as_type):
 def unjsonify_dataclass(value, as_type):
     typecheck(value, dict, as_type)
 
+    # collect all properties in the input value that match any of
+    # the dataclass fields
     kwargs = {
         field.name:  unjsonify[field.type](value.get(field.name))
-        for field in dataclasses.fields(as_type)
+        for field in get_dataclass_fields(as_type)
         if (
             field.name in value or
-            field.default is not  dataclasses.MISSING or
+            field.default is not dataclasses.MISSING or
             field.default_factory is not dataclasses.MISSING
         )
     }

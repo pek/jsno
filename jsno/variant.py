@@ -12,25 +12,33 @@ class VariantFamily:
         self.root_class = root_class
         self.label_name = label_name
 
-        self.label_for_class = {}
+        self._label_for_class = {}
+        self._class_for_label = {}
 
-    def get_variant(self, label: str , cls=None) -> type | None:
+    def get_variant(self, label: str) -> type | None:
         """
         Get the variant class corresponding to the given label,
         or None if there is no class registerd for that label.
-
-        Starts the search from class cls, or from the root class
-        if not provided.
         """
 
-        if cls is None:
-            cls = self.root_class
+        # check the cache first, using VariantFamily as the sentinel!
+        cls = self._class_for_label.get(label, VariantFamily)
+        if cls is not VariantFamily:
+            return cls
+
+        # search subclasses
+        cls = self._search_variant(label, self.root_class)
+        self._class_for_label[label] = cls
+
+        return cls
+
+    def _search_variant(self, label: str, cls: type) -> type | None:
 
         if label == self.get_label(cls):
             return cls
 
         for sub in cls.__subclasses__():
-            if (it := self.get_variant(label, sub)):
+            if (it := self._search_variant(label, sub)):
                 return it
 
         return None
@@ -40,7 +48,7 @@ class VariantFamily:
         Get the label for a class. If not expiclitly, set, using the
         variantlabel decorator, the label is taken from the class name.
         """
-        return self.label_for_class.get(cls) or cls.__name__
+        return self._label_for_class.get(cls) or cls.__name__
 
     def register_variant(self, cls: type, label: str):
         """
@@ -50,7 +58,10 @@ class VariantFamily:
         if self.get_variant(label) is not None:
             raise ValueError(f"Variant with the label '{label}' already registered")
 
-        self.label_for_class[cls] = label
+        self._label_for_class[cls] = label
+
+        # clear the label search cache, as there might be a change
+        self._class_for_label.clear()
 
 
 @functools.singledispatch
