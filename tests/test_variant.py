@@ -59,6 +59,7 @@ expr = And(Not(Variable("x")), Or(Variable("y"), Literal(False)))
 
 def test_expression_evaluation():
    assert expr.evaluate({"x": False, "y": True}) is True
+   assert expr.evaluate({"x": False, "y": False}) is False
 
 
 def test_jsonify_variant():
@@ -108,3 +109,11 @@ def test_jsonify_variant_no_label_error():
 def test_jsonify_variant_not_dict_error():
     with pytest.raises(UnjsonifyError):
         unjsonify[Expression]("Something else")
+
+
+def test_variantlabel_error():
+
+    with pytest.raises(TypeError):
+        @variantlabel('not-a-variant')
+        class Foo:
+            pass

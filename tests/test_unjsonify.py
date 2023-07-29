@@ -3,7 +3,7 @@ import datetime
 import pytest
 import zoneinfo
 
-from typing import Optional, List, Literal
+from typing import Callable, Optional, List, Literal
 
 from jsno.unjsonify import unjsonify, UnjsonifyError
 
@@ -154,3 +154,38 @@ def test_unjsonify_bytes():
     assert unjsonify[bytes]("Zm9vYmFyIQ==") == b"foobar!"
 
 
+
+def test_unjsonify_str_subclass():
+
+    class SpecialString(str):
+        pass
+
+    assert unjsonify[SpecialString]("special") == SpecialString("special")
+
+
+def test_unjsonify_float_subclass():
+
+    class SpecialFloat(float):
+        pass
+
+    assert unjsonify[SpecialFloat](6.66) == SpecialFloat(6.66)
+
+
+def test_unjsonify_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[dict]("ffff")
+
+
+def test_unjsonify_union_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[dict | str](None)
+
+
+def test_unjsonify_not_defined():
+    with pytest.raises(TypeError):
+        unjsonify[Callable]("call")
+
+
+def test_unjsonify_date_failure():
+    with pytest.raises(TypeError):
+        unjsonify[datetime.date]("today")

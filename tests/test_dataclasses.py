@@ -149,3 +149,8 @@ def test_ujsonify_with_not_dict_error():
     with pytest.raises(UnjsonifyError):
         unjsonify[Brick]("Something else")
 
+
+def test_unjsonify_dataclass_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Box]({})
+

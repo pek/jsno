@@ -113,13 +113,15 @@ class Unjsonify:
 
         origin = get_origin(type_) or type_
 
+        # special cases needed for constructs in typing module, as
+        # singledispatch fails cannot handle Union and Literal
         if origin is Union:
-            # special case needed, as singledispatch fails cannot handle
-            # typing.Union
             func = unjsonify_union
         elif origin is Literal:
+            # Literal needs a
             func = unjsonify_literal
         else:
+            # covers list[X], dict[K,V], etc.
             func = unjsonify_type.dispatch(origin)
 
         # return a specialized version of the unjsonify function
@@ -139,95 +141,6 @@ class Unjsonify:
 unjsonify = Unjsonify()
 
 
-@unjsonify.register(type(None))
-def _(value, as_type):
-    typecheck(value, type(None), as_type)
-    return None
-
-
-@unjsonify.register(float)
-def _(value, as_type):
-    typecheck(value, float, as_type)
-    return cast(value, as_type)
-
-
-@unjsonify.register(int)
-def _(value, as_type):
-    typecheck(value, int, as_type)
-    return cast(value, as_type)
-
-
-@unjsonify.register(bool)
-def _(value, as_type):
-    typecheck(value, bool, as_type)
-    return cast(value, as_type)
-
-
-@unjsonify.register(str)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    return cast(value, as_type)
-
-
-@unjsonify.register(Sequence)
-@unjsonify.register(Set)
-def unjsonify_sequence(value, as_type):
-    typecheck(value, list, as_type)
-
-    arg_types = get_args(as_type)
-
-    if not arg_types:
-        return cast(value, as_type)
-    else:
-        unjsonify_item = unjsonify[arg_types[0]]
-        return cast([unjsonify_item(item) for item in value], as_type)
-
-
-@unjsonify.register(tuple)
-def _(value, as_type):
-    """
-    Jsonify tuples.
-
-    Tuples are a subclass of Sequence, but tuples with more
-    than one argument are treated specially.
-    """
-
-    arg_types = get_args(as_type)
-    if arg_types and len(arg_types) < 2:
-        return unjsonify_sequence(value, as_type)
-
-    typecheck(value, list, as_type)
-
-    if len(value) != len(arg_types):
-        raise_error(value, as_type)
-
-    return as_type(
-        unjsonify[type_](item)
-        for (item, type_) in zip(value, arg_types)
-    )
-
-
-@unjsonify.register(Mapping)
-def _(value, as_type):
-    """
-    Unjsonify any Mapping type. Expects the input value to be
-    a JSON object (dict).
-    """
-
-    typecheck(value, dict, as_type)
-
-    arg_types = get_args(as_type)
-    if not arg_types:
-        return cast(value, as_type)
-    else:
-        unjsonify_key = unjsonify[arg_types[0]]
-        unjsonify_val = unjsonify[arg_types[1]]
-        return as_type({
-            unjsonify_key(key): unjsonify_val(val)
-            for (key, val) in value.items()
-        })
-
-
 @unjsonify.register(types.UnionType)
 def unjsonify_union(value, as_type):
     """
@@ -241,53 +154,4 @@ def unjsonify_union(value, as_type):
             # try next option
             continue
 
-    raise_error(value, as_type)
-
-
-@unjsonify.register(enum.Enum)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    try:
-        return getattr(as_type, value)
-    except AttributeError:
-        pass
-
-    raise_error(value, as_type)
-
-
-@unjsonify.register(datetime.datetime)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    try:
-        return as_type.fromisoformat(value)
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise_error(value, as_type, detail)
-
-
-@unjsonify.register(datetime.date)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    try:
-        (ys, ms, ds) = value.split('-')
-        return as_type(int(ys), int(ms), int(ds))
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise_error(value, as_type, detail)
-
-
-@unjsonify.register(ByteString)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-
-    try:
-        return base64.b64decode(value.encode('ascii'))
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise_error(value, as_type, detail)
-
-
-
+    raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value)

@@ -2,6 +2,8 @@ import collections
 import datetime
 import zoneinfo
 
+import pytest
+
 from jsno.jsonify import jsonify
 
 
@@ -129,3 +131,34 @@ def test_jsonify_empty_list():
 
 def test_jsonify_dict_with_int_keys():
     assert jsonify({1: 2, 3: 4}) == {"1": 2, "3": 4}
+
+
+def test_jsonify_error():
+    with pytest.raises(TypeError):
+        jsonify(lambda x: x)
+
+
+def test_call_jsonify_as_type():
+    assert jsonify.call_as_type(123, int) == 123
+    assert jsonify.call_as_type({}, dict) == {}
+
+
+def test_call_jsonify_as_type_error():
+    with pytest.raises(TypeError):
+        jsonify.call_as_type(123, dict)
+
+
+def test_unjsonify_str_subclass():
+
+    class SpecialString(str):
+        pass
+
+    assert jsonify(SpecialString("special")) == "special"
+
+
+def test_unjsonify_float_subclass():
+
+    class SpecialFloat(float):
+        pass
+
+    assert jsonify(SpecialFloat(123.4)) == 123.4

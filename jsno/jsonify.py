@@ -1,13 +1,7 @@
-import base64
 import dataclasses
-import datetime
-import enum
 import functools
 
-from collections.abc import ByteString, Mapping, Sequence, Set
-
-
-from jsno.utils import is_optional, format_datetime
+from jsno.utils import is_optional
 from jsno.variant import get_variantclass
 
 
@@ -181,76 +175,3 @@ class Jsonify:
 
 
 jsonify = Jsonify()
-
-
-@jsonify.register(str)
-def _(value):
-    return str(value)
-
-
-@jsonify.register(bool)
-def _(value):
-    return bool(value)
-
-
-@jsonify.register(float)
-def _(value):
-    return float(value)
-
-
-@jsonify.register(type(None))
-def _(value):
-    return None
-
-
-@jsonify.register(int)
-def _(value):
-    return int(value)
-
-
-@jsonify.register(Mapping)
-def _(value):
-    return {str(jsonify(key)): jsonify(val) for (key, val) in value.items()}
-
-
-@jsonify.register(Sequence)
-def jsonify_sequence(value):
-    return [jsonify(val) for val in value]
-
-
-@jsonify.register(Set)
-def _(value):
-    """
-    Set is not a sequence, so it needs it's own jsonifier.
-    Because the order of iterating over a set is not defined, the jsonification
-    tries to sort the set first, to make the results more predictable.
-    """
-
-    # if possible, sort the values first.
-    try:
-        value = sorted(value)
-    except:
-        pass
-
-    return [jsonify(val) for val in value]
-
-
-@jsonify.register(enum.Enum)
-def _(enum):
-    return enum.name
-
-
-@jsonify.register(datetime.date)
-def _(date):
-    return f'{date.year}-{date.month:02}-{date.day:02}'
-
-
-@jsonify.register(datetime.datetime)
-def _(datetime):
-    return format_datetime(datetime)
-
-
-@jsonify.register(ByteString)
-def _(value):
-    return base64.b64encode(value).decode('ascii')
-

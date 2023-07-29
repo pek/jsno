@@ -1,3 +1,8 @@
+"""
+Decorator for marking a class so that it will be jsonified by a method
+call: obj.jsonify()
+"""
+
 from jsno.jsonify import generic_jsonify
 from jsno.unjsonify import unjsonify
 

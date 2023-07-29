@@ -33,14 +33,10 @@ unjsonify class method.
 import json
 
 from jsno.jsonify import jsonify
+from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
 from jsno.unjsonify import unjsonify, UnjsonifyError
 from jsno.variant import get_variantclass, variantclass, variantlabel
 
-
-def dumps(value, **kwargs):
-    return json.dumps(jsonify(value), **kwargs)
-
-
-def loads(value, as_type, **kwargs):
-    return unjsonify[as_type](json.loads(value, **kwargs))
+import jsno.abc
+import jsno.standard
