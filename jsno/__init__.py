@@ -36,7 +36,7 @@ from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
 from jsno.unjsonify import unjsonify, UnjsonifyError
-from jsno.variant import get_variantclass, variantclass, variantlabel
+from jsno.variant import get_variantfamily, variantfamily, variantlabel
 
 import jsno.abc
 import jsno.standard

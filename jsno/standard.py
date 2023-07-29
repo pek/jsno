@@ -171,6 +171,6 @@ def _(value):
 
 @unjsonify.register(decimal.Decimal)
 def _(value, as_type):
-    typecheck(value, (str, int, float), as_type)
+    typecheck(value, (str, int), as_type)
 
     return as_type(value)

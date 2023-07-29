@@ -11,7 +11,7 @@ from typing import Any, Union, Literal
 
 
 from jsno.utils import get_origin, get_args
-from jsno.variant import get_variantclass
+from jsno.variant import get_variantfamily
 
 
 class UnjsonifyError(TypeError):
@@ -83,16 +83,16 @@ def unjsonify_dataclass(value, as_type):
     raise_error(value, as_type, detail)
 
 
-def unjsonify_variantclass(value, as_type, variantclass):
+def unjsonify_variant(value, as_type, family):
     typecheck(value, dict, as_type)
 
-    label_name = variantclass.label_name
+    label_name = family.label_name
 
     label = value.get(label_name)
     if label is None:
         raise_error(value, as_type, f"missing {label}")
 
-    variant_type = variantclass.get_variant(label)
+    variant_type = family.get_variant(label)
     if variant_type is None or not issubclass(variant_type, as_type):
         raise_error(value, as_type, f"unknown {label_name} label: {label}")
 
@@ -129,8 +129,8 @@ class Unjsonify:
 
     def __getitem__(self, type_):
 
-        if (variantclass := get_variantclass(type_)):
-            return lambda value: unjsonify_variantclass(value, type_, variantclass)
+        if (isinstance(type_, type) and (family := get_variantfamily(type_))):
+            return lambda value: unjsonify_variant(value, type_, family)
 
         return self._dispatch(type_)
 

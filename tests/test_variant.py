@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from jsno import jsonify, unjsonify, variantclass, variantlabel, dumps, UnjsonifyError
+from jsno import jsonify, unjsonify, variantfamily, variantlabel, UnjsonifyError
 
 
 
-@variantclass(label='type')
+@variantfamily(label='type')
 class Expression:
     pass
 
@@ -64,7 +64,7 @@ def test_expression_evaluation():
 
 def test_jsonify_variant():
     jsonified =  jsonify(expr)
-  #  print(dumps(expr, indent=4 ))
+
     assert jsonified == {
         "type": "And",
         "left": {
