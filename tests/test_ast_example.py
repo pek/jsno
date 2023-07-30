@@ -1,4 +1,4 @@
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 
 import jsno
 
@@ -38,7 +38,6 @@ class Add(BinaryOperator):
 class Multiply(BinaryOperator):
     def evaluate(self, context):
         return self.left.evaluate(context) * self.right.evaluate(context)
-
 
 
 def test_ast():

@@ -61,9 +61,11 @@ def _(value, as_type):
     # first unjsonify the state
     state = jsno.unjsonify[tuple[int, tuple[int, ...], float | None]](value)
 
+    # create a new Random object and install the unjsonified state
     result = Random()
     result.setstate(state)
     return result
+
 
 def test_random_example():
     rng = Random()
@@ -77,4 +79,3 @@ def test_random_example():
     b = rng.gauss()
 
     assert a == b
-
