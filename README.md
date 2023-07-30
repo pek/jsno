@@ -7,7 +7,7 @@ data is required: it can be dumped into a file, sent over the network
 in an API call, or stored in a database that support JSON data.
 
 Note that jsno does not replace the standard _json_ module - it does not
-produce JSON encoded string, but turns arbitrary Python values into
+produce JSON encoded string, but instead turns arbitrary Python values into
 structures that _can_ be JSON encoded.
 
 Jsno provides jsonification for most of the standard Python datatypes.
@@ -199,7 +199,6 @@ def _(value, as_type):
     result = Random()
     result.setstate(state)
     return result
-
 ```
 
 Now it's possible to for example have a random number generator as a part of a data
@@ -292,15 +291,14 @@ _Expression_ fails:
 
 ```py
 jsno.unjsonify[Expression](json)
-# TypeError: Unjsonify not defined for <class 'test_ast_example.Expression'>
+# TypeError: Unjsonify not defined for <class 'Expression'>
 ```
 
 Even if you defined the base Expression class as a dataclass, jsno wouldn't not which
 of the subclasses should it choose.
 
 The solution to the problem is to mark the root of the expression as the root of a
-_variant family_, using the
-`variantfamily` decorator:
+_variant family_, using the `variantfamily` decorator:
 
 ```py
 @jsno.variantfamily(label="type")
@@ -308,9 +306,11 @@ class Expression:
     pass
 ```
 
-When a class is marked to form a variant family, jsno will add a label to the jsonfied
-data, to denote the class. Now, the JSON produced by `jsonify` contains labels to
-differntiate between the subclasses (variants):
+When a class is marked to form a variant family, jsno will add a label to the data
+jsonfied from it's, or it's subclasses' instances, to identify the class.
+
+Adter adding the decorator, the JSON produced by _jsonify_ contains labels to
+differentiate between the subclasses (variants):
 
 ```json
 {
@@ -338,13 +338,14 @@ The variant label's name (`type`) was given in the decorator.
 Now, jsno is able to unjsonify the AST:
 
 ```py
-assert jsno.unjsonify[Expression](json) == ast
+unjsonified_ast = jsno.unjsonify[Expression](json)
+assert unjsonified_ast == ast
 ```
 
 By default, the label for a class is taken from the class name. It's also possible
-to give it explicitly, if needed, using the `variantlabel` decorator:
+to give it explicitly using the `variantlabel` decorator:
 
-```
+```py
 @jsno.variantlabel('mult')
 class Multiply(Expression):
     # ...
@@ -355,7 +356,7 @@ class Multiply(Expression):
 
 Install jsno with pip:
 
-```
+```bash
 pip install jsno
 ```
 
