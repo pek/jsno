@@ -19,9 +19,14 @@ def dumps(value, **kwargs) -> str:
     return json.dumps(jsonify(value), **kwargs)
 
 
-def loads(arg: str, as_type, **kwargs):
+class Loads:
     """
-    Load a value of given type from a JSON-encoded string.
+    Factory for type-specific loads functions
     """
 
-    return unjsonify[as_type](json.loads(arg, **kwargs))
+    def __getitem__(self, type_):
+        unjsonify_ = unjsonify[type_]
+        return lambda *args, **kwargs: unjsonify_(json.loads(*args, **kwargs))
+
+
+loads = Loads()

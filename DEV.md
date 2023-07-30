@@ -1,4 +1,4 @@
-=== Development commands
+### Development commands
 
 Run tests with coverage:
 
