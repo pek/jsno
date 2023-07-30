@@ -97,7 +97,6 @@ The file will look like this:
         "ips": []
     }
 ]
---
 ```
 
 To read and use the domains later:
@@ -351,3 +350,13 @@ class Multiply(Expression):
     # ...
 
 ```
+
+## Installation
+
+Install jsno with pip:
+
+```
+pip install jsno
+```
+
+Jsno has no 3rd party dependencies.
