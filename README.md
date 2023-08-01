@@ -152,6 +152,7 @@ _variant family_.
 * ranges
 * enums
 * date and datetime objects (converted to ISO-formatted strings)
+* complex
 * decimal.Decimal (converted to JSON strings)
 * pathlib.Path
 * zoneinfo.ZoneInfo
