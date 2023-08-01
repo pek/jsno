@@ -44,7 +44,7 @@ from jsno.variant import get_variantfamily, variantfamily, variantlabel, Variant
 import jsno.abc  # noqa
 
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 __all__ = [
     "dumps",
