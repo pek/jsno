@@ -62,3 +62,12 @@ def test_email_contraint():
         unjsonify[User]({"username": "usr", "email": "user@domain.com"}) ==
         User("usr", "user@domain.com")
     )
+
+
+def test_regex():
+    Email = Annotated[str, Constraint.regex(r"[\w\.]+@([\w-]+\.)+[\w-]{2,4}")]
+
+    assert unjsonify[Email]("valid.email@example.com") == "valid.email@example.com"
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Email]("valid.email@example@com")

@@ -1,5 +1,7 @@
+import re
+
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Annotated, Any, Callable
 
 from jsno.unjsonify import validate_annotation
 
@@ -43,9 +45,19 @@ class LenConstraint(RangeConstraint):
     def evaluate(self, value) -> bool:
         return super().evaluate(len(value))
 
+class RegExConstraint(Constraint):
+
+    def __init__(self, regex, name=None):
+        self.regex = re.compile(regex)
+        self.name = name or f"Regular expression {regex}"
+
+    def evaluate(self, value: str) -> bool:
+        return self.regex.fullmatch(value) is not None
+
 
 Constraint.range = RangeConstraint  # type: ignore
 Constraint.len = LenConstraint  # type: ignore
+Constraint.regex = RegExConstraint  # type: ignore
 
 
 @dataclass(slots=True, frozen=True)
