@@ -3,7 +3,7 @@ import datetime
 import pytest
 import zoneinfo
 
-from typing import Any, Callable, Optional, List, Literal
+from typing import Annotated, Any, Callable, Optional, List, Literal
 
 from jsno.unjsonify import unjsonify, UnjsonifyError
 
@@ -121,6 +121,10 @@ def test_unjsonify_literal():
 def test_unjsonify_literal_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[Literal["A", "B"]]("C")
+
+
+def test_unjsonify_annotated():
+    assert unjsonify[Annotated[tuple[int, ...], "metadata"]]([123]) == (123,)
 
 
 def test_unjsonify_dictionary_of_dates():

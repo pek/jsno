@@ -3,7 +3,7 @@ import dataclasses
 import time
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True, frozen=True)
 class MeasuredTime:
     total: float = 0
 

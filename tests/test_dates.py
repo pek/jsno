@@ -90,17 +90,13 @@ def test_unjsonify_datetime_failure():
 
 
 def test_jsonify_time():
-    assert jsonify(datetime.time(23,59,59)) == "23:59:59"
+    assert jsonify(datetime.time(23, 59, 59)) == "23:59:59"
 
 
 def test_unjsonify_time():
-    assert unjsonify[datetime.time]("23:59:59") == datetime.time(23,59,59)
+    assert unjsonify[datetime.time]("23:59:59") == datetime.time(23, 59, 59)
 
 
 def test_unjsonify_time_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[datetime.time]("24:59:59")
-
-
-
-

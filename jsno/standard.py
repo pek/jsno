@@ -280,7 +280,7 @@ def _(value):
     return result
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True, frozen=True)
 class Range:
     start: int
     stop: int

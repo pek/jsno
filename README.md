@@ -223,6 +223,34 @@ def load_game(database, identifier: str) -> GameState:
     return unjsonify[GameState](json)
 ```
 
+## Constraints
+
+Jsno support annotating types with constraints that are boolean valued functions
+that must return True for the unjsonified value for it to be valid. For example,
+to only accept email addresses that contain the "@" character:
+
+```py
+from typing import Annotated
+from jsno import Constraint
+
+@dataclass
+class User:
+    username: str
+    email: Annotated[str, Constraint(lambda it: "@" in it)]
+
+```
+
+The most typical constraints are those that limit the value or the length of a
+property to a certain range. For these, jsno provides predefined shortcuts:
+
+
+```py
+@dataclass
+class Player:
+    username: Annotated[str, Constraint.len(min=4, max=16)]
+    credits: Annotated[int, Constraint.range(min=0)]
+```
+
 ## Variant families
 
 Sometimes it's useful to have a hierarchy of classes, consisting of several subclasses

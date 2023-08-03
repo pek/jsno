@@ -3,8 +3,7 @@ import functools
 import types
 
 
-from typing import Any, Union, Literal
-
+from typing import Annotated, Any, Union, Literal
 
 from jsno.utils import get_origin, get_args, get_dataclass_fields
 from jsno.variant import get_variantfamily
@@ -111,7 +110,7 @@ class Unjsonify:
         if origin is Union:
             func = unjsonify_union
         elif origin is Literal:
-            # Literal needs a
+            # Cannot dispatch on Literal
             func = unjsonify_literal
         else:
             # covers list[X], dict[K,V], etc.
@@ -153,3 +152,27 @@ def unjsonify_union(value, as_type):
 def _(value, as_type):
     """Unjsonify Any type: just return the value"""
     return value
+
+
+@functools.singledispatch
+def validate_annotation(arg, value):
+    pass
+
+
+@unjsonify.register(Annotated)
+def _(value, as_type):
+    args = get_args(as_type)
+    result = unjsonify[args[0]](value)
+
+    ix = 1
+    while ix < len(args):
+        try:
+            validate_annotation(args[ix], result)
+            ix += 1
+            continue
+        except ValueError as exc:
+            detail = exc.args[0]
+
+        raise_error(result, as_type, detail)
+
+    return result

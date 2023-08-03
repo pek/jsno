@@ -15,7 +15,7 @@ The following types are currently supported:
     - dicts
     - types marked as dataclass
     - enum types
-    - date and datetime
+    - datetime, date and time
     - complex
     - pathlib.Path
     - decimal.Decimal
@@ -33,6 +33,7 @@ unjsonify class method.
 
 """
 
+from jsno.constraint import Constraint
 from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
@@ -44,7 +45,7 @@ from jsno.variant import get_variantfamily, variantfamily, variantlabel, Variant
 import jsno.abc  # noqa
 
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 __all__ = [
     "dumps",
@@ -56,6 +57,7 @@ __all__ = [
     "unjsonify",
     "variantfamily",
     "variantlabel",
+    "Constraint",
     "UnjsonifyError",
     "VariantFamily",
 ]
