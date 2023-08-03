@@ -183,6 +183,26 @@ def _(value, as_type):
     raise_error(value, as_type, detail)
 
 
+# datetime.time
+
+
+@jsonify.register(datetime.time)
+def _(value):
+    return str(value)
+
+
+@unjsonify.register(datetime.time)
+def _(value, as_type):
+    typecheck(value, str, as_type)
+
+    try:
+        return datetime.time.fromisoformat(value)
+    except ValueError as exc:
+        detail = exc.args[0]
+
+    raise_error(value, as_type, detail)
+
+
 # datetime.datetime
 
 
