@@ -16,7 +16,7 @@ def test_function_constraint():
 
 
 def test_range():
-    Number = Annotated[int, Constraint.range(min=1, max=3)]
+    Number = int // Constraint.range(min=1, max=3)
 
     assert unjsonify[Number](1) == 1
 
@@ -25,7 +25,7 @@ def test_range():
 
 
 def test_len_range():
-    Identifier = Annotated[str, Constraint.len(min=16, max=16)]
+    Identifier = str // Constraint.len(min=16, max=16)
 
     assert unjsonify[Identifier]("1234567890abcdef") == "1234567890abcdef"
 
@@ -34,7 +34,7 @@ def test_len_range():
 
 
 def test_len_min():
-    Identifier = Annotated[str, Constraint.len(min=16)]
+    Identifier = str // Constraint.len(min=16)
 
     assert unjsonify[Identifier]("1234567890abcdef") == "1234567890abcdef"
 
@@ -43,7 +43,7 @@ def test_len_min():
 
 
 def test_len_max():
-    Identifier = Annotated[str, Constraint.len(max=3)]
+    Identifier = str // Constraint.len(max=3)
 
     assert unjsonify[Identifier]("123") == "123"
 
@@ -51,10 +51,14 @@ def test_len_max():
         unjsonify[Identifier]("whaat")
 
 
+# defining this outside the type annotation as it confuses flake8
+EmailConstraint = Constraint(lambda it: "@" in it, "Valid email address")
+
+
 @dataclass
 class User:
     username: str
-    email: Annotated[str, Constraint(lambda it: "@" in it, "Valid email address")]
+    email: str // EmailConstraint
 
 
 def test_email_contraint():
@@ -65,9 +69,40 @@ def test_email_contraint():
 
 
 def test_regex():
-    Email = Annotated[str, Constraint.regex(r"[\w\.]+@([\w-]+\.)+[\w-]{2,4}")]
+    Email = str // Constraint.regex(r"[\w\.]+@([\w-]+\.)+[\w-]{2,4}")
 
     assert unjsonify[Email]("valid.email@example.com") == "valid.email@example.com"
 
     with pytest.raises(UnjsonifyError):
         unjsonify[Email]("valid.email@example@com")
+
+
+def test_double_constrait():
+    Aaaaa = str // Constraint.regex(r"[a]+") // Constraint.len(min=5)
+
+    assert unjsonify[Aaaaa]("aaaaa") == "aaaaa"
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Aaaaa]("aaaaaaah")
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Aaaaa]("aaa")
+
+
+LiteralInt = Constraint.regex("[0-9]*")
+LiteralString = Constraint.regex('".*"')
+
+
+@dataclass
+class LiteralValue:
+    value: str // (LiteralInt | LiteralString)
+
+
+def test_or_constraint():
+    assert(
+        unjsonify[list[LiteralValue]]([{"value": "123"}, {"value": '"xxx"'}]) ==
+        [LiteralValue("123"), LiteralValue('"xxx"')]
+    )
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[list[LiteralValue]]([{"value": "foo"}])

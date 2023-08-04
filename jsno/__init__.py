@@ -37,6 +37,7 @@ from jsno.constraint import Constraint
 from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
+from jsno.record import Record
 from jsno.standard import jsonify_as_string
 from jsno.unjsonify import unjsonify, UnjsonifyError
 from jsno.variant import get_variantfamily, variantfamily, variantlabel, VariantFamily
@@ -45,7 +46,7 @@ from jsno.variant import get_variantfamily, variantfamily, variantlabel, Variant
 import jsno.abc  # noqa
 
 
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 
 __all__ = [
     "dumps",
@@ -58,6 +59,7 @@ __all__ = [
     "variantfamily",
     "variantlabel",
     "Constraint",
+    "Record",
     "UnjsonifyError",
     "VariantFamily",
 ]

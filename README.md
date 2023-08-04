@@ -240,15 +240,61 @@ class User:
 
 ```
 
+Constraints are always used within Annotated, so there is a shortcut operator to
+make the definitions clearer. This is equivalent to the definition above:
+
+```py
+@dataclass
+class User:
+    username: str
+    email: str // Constraint(lambda it: "@" in it)
+
+```
+
+Using the `//`-operator, the type of the property is directly after the colon,
+not nested inside an Annotated-expression.
+
 The most typical constraints are those that limit the value or the length of a
 property to a certain range. For these, jsno provides predefined shortcuts:
-
 
 ```py
 @dataclass
 class Player:
-    username: Annotated[str, Constraint.len(min=4, max=16)]
-    credits: Annotated[int, Constraint.range(min=0)]
+    username: str // Constraint.len(min=4, max=16)
+    credits: int // Constraint.range(min=0)
+```
+
+There is also a constraint for matching the value with a regular expression:
+
+```py
+@dataclass
+class Variable:
+    name: str // Constraint.regex("[A-Za-z_][A-Za-z0-9_]*")
+```
+
+Constraints can be joined using the or-operator `|`:
+
+```py
+LiteralInt = Constraint.regex("[0-9]*")
+LiteralString = Constraint.regex('".*"')
+
+@dataclass
+class LiteralValue:
+    value: str // (LiteralInt | LiteralString)
+```
+
+## Anonymous record types
+
+Sometimes it's better to define substructures in complex data inline, without
+lifting them into named types. For this purpose, jsno provides "Record" type
+constructor, to conveniently define one-off dataclasses:
+
+```py
+@dataclass
+class User:
+    username: str
+    email: str
+    apikeys: list[Record(value=str, created_at=datetime)]
 ```
 
 ## Variant families

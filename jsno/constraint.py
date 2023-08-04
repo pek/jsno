@@ -15,6 +15,38 @@ class Constraint:
         obj.__init__(*args, **kwargs)
         return obj
 
+    def __rfloordiv__(self, type_):
+        """
+        type // Constraint(...)
+        """
+        return Annotated[type_, self]
+
+    def __or__(self, that):
+        return OrConstraint(self, that)
+
+    @staticmethod
+    def regex(regex, name=None):
+        return RegExConstraint(
+            name=(name or f"Regular expression {regex}"),
+            regex=re.compile(regex),
+        )
+
+    def evaluate(self, value) -> bool:
+        raise NotImplementedError()  # pragma: no cover
+
+
+@dataclass(slots=True, frozen=True)
+class OrConstraint(Constraint):
+    left: Constraint
+    right: Constraint
+
+    def evaluate(self, value) -> bool:
+        return self.left.evaluate(value) or self.right.evaluate(value)
+
+    @property
+    def name(self):
+        return f'{self.left.name} or {self.right.name}'
+
 
 @dataclass(slots=True, frozen=True)
 class RangeConstraint(Constraint):
@@ -45,25 +77,27 @@ class LenConstraint(RangeConstraint):
     def evaluate(self, value) -> bool:
         return super().evaluate(len(value))
 
+
+@dataclass(slots=True, frozen=True)
 class RegExConstraint(Constraint):
+    name: str
+    regex: re.Pattern
 
-    def __init__(self, regex, name=None):
-        self.regex = re.compile(regex)
-        self.name = name or f"Regular expression {regex}"
-
-    def evaluate(self, value: str) -> bool:
-        return self.regex.fullmatch(value) is not None
+    def evaluate(self, value) -> bool:
+        return self.regex.fullmatch(str(value)) is not None
 
 
 Constraint.range = RangeConstraint  # type: ignore
 Constraint.len = LenConstraint  # type: ignore
-Constraint.regex = RegExConstraint  # type: ignore
 
 
 @dataclass(slots=True, frozen=True)
 class FunctionConstraint(Constraint):
-    evaluate: Callable[[Any], bool]
+    function: Callable[[Any], bool]
     name: str | None = None
+
+    def evaluate(self, value) -> bool:
+        return self.function(value)
 
 
 @validate_annotation.register(Constraint)
