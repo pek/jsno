@@ -100,3 +100,8 @@ def test_unjsonify_time():
 def test_unjsonify_time_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[datetime.time]("24:59:59")
+
+
+def test_unjsonify_date_failure():
+    with pytest.raises(TypeError):
+        unjsonify[datetime.date]("today")

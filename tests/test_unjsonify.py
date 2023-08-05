@@ -47,7 +47,7 @@ def test_unjsonify_list():
     assert unjsonify[list]([1, 2, 3]) == [1, 2, 3]
 
 
-def test_unjsonify_typed_dict():
+def test_unjsonify_dict_with_types():
     assert unjsonify[dict[str, int]]({'x': 1, 'y': 2}) == {'x': 1, 'y': 2}
 
 
@@ -176,8 +176,3 @@ def test_unjsonify_union_error():
 def test_unjsonify_not_defined():
     with pytest.raises(TypeError):
         unjsonify[Callable]("call")
-
-
-def test_unjsonify_date_failure():
-    with pytest.raises(TypeError):
-        unjsonify[datetime.date]("today")

@@ -3,10 +3,12 @@ Jsonification and unjsonification for abstract base classes
 """
 
 import base64
+import typing
 
 from collections.abc import ByteString, Mapping, Sequence, Set
 
 from jsno.jsonify import jsonify
+from jsno.typeddict import unjsonify_typeddict
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
 from jsno.utils import get_args
 
@@ -30,9 +32,9 @@ def _(value, as_type):
 
     arg_types = get_args(as_type)
 
-    if not arg_types:
-        return cast(value, as_type)
-    else:
+    if arg_types:
+        # the mapping has arguments. Expects it to have key and value
+        # types like dict[str, int]
         unjsonify_key = unjsonify[arg_types[0]]
         unjsonify_val = unjsonify[arg_types[1]]
 
@@ -41,6 +43,13 @@ def _(value, as_type):
             for (key, val) in value.items()
         }
         return cast(as_dict, as_type)
+    elif type(as_type) is typing._TypedDictMeta:
+        # TypedDicts must be caught at this stage, as they are
+        # non-istantiable subclasses of dict.
+        return unjsonify_typeddict(value, as_type)
+    else:
+        # monotyped case: convert from dict
+        return cast(value, as_type)
 
 
 # Sequence
