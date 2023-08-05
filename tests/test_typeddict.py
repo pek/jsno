@@ -32,3 +32,4 @@ def test_unjsonify_nontotal_typed_dict():
 
     with pytest.raises(UnjsonifyError):
         unjsonify[ApiKey]({"value": "XXX", "treated_at": "2023-08-05T07:22:33"})
+

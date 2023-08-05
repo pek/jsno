@@ -119,3 +119,10 @@ def test_unjsonify_float_subclass():
         pass
 
     assert jsonify(SpecialFloat(123.4)) == 123.4
+
+
+def test_namedtuple():
+    LogEntry = collections.namedtuple("LogEntry", ["date", "message"])
+
+    entry = LogEntry(date=datetime.date(2023, 8, 5), message="ok")
+    assert jsonify(entry) == ["2023-08-05", "ok"]

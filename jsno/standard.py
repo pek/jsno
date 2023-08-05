@@ -136,6 +136,10 @@ def _(value, as_type):
 
     typecheck(value, list, as_type)
 
+    if not hasattr(as_type, '__args__'):
+        # untyped tuple
+        return tuple(value)
+
     if len(value) != len(arg_types):
         raise_error(value, as_type)
 

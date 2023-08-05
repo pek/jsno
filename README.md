@@ -157,6 +157,8 @@ _variant family_.
 * pathlib.Path
 * zoneinfo.ZoneInfo
 * Literal (only int and str literals)
+* TypedDict
+* NewType
 
 ## Dumps and loads
 

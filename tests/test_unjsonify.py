@@ -76,8 +76,29 @@ def test_unjsonify_n_ary_tuple():
     assert unjsonify[tuple[float, ...]]([1.0, 2.0, 3.0]) == (1, 2, 3.0)
 
 
+def test_unjsonify_untyped_tuple():
+    assert unjsonify[tuple]([True, None]) == (True, None)
+
+
+def test_unjsonify_untyped_empty_tuple():
+    assert unjsonify[tuple]([]) == ()
+
+
 def test_unjsonify_empty_tuple():
     assert unjsonify[tuple[()]]([]) == ()
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[tuple[()]]([123])
+
+
+def test_ujsonify_namedtuple():
+    LogEntry = collections.namedtuple("LogEntry", ["date", "message"])
+
+    entry = LogEntry(date="2023-08-05", message="ok")
+    assert unjsonify[LogEntry](["2023-08-05", "ok"]) == entry
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[tuple[LogEntry]](["2023-08-05", "ok", "more"])
 
 
 def test_unjsonify_malformed_type_error():
@@ -182,3 +203,4 @@ def test_newtype():
     Point = NewType("Point", tuple[float, float])
 
     assert unjsonify[Point]([1.2, 3.4]) == (1.2, 3.4)
+
