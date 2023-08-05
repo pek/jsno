@@ -203,4 +203,3 @@ def test_newtype():
     Point = NewType("Point", tuple[float, float])
 
     assert unjsonify[Point]([1.2, 3.4]) == (1.2, 3.4)
-

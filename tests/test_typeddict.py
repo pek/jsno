@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import TypedDict, NotRequired, Required
+from typing import TypedDict, NotRequired, Required, NamedTuple
 
 import pytest
 
-from jsno import unjsonify, UnjsonifyError
+from jsno import jsonify, unjsonify, UnjsonifyError
 
 
 def test_unjsonify_typed_dict():
@@ -33,3 +33,16 @@ def test_unjsonify_nontotal_typed_dict():
     with pytest.raises(UnjsonifyError):
         unjsonify[ApiKey]({"value": "XXX", "treated_at": "2023-08-05T07:22:33"})
 
+
+def test_namedtuple():
+
+    class LogEntry(NamedTuple):
+        date: datetime
+        message: str
+
+    entry = LogEntry(date=datetime(2023, 8, 5, 8, 32, 10), message="fail")
+    json = ["2023-08-05T08:32:10", "fail"]
+
+    assert jsonify(entry) == json
+
+    assert unjsonify[LogEntry](json) == entry

@@ -7,6 +7,7 @@
 * joining constraints with | operator
 * anonymous Record types
 * support for TypedDict and NewType
+* support for untyped tuples and namedtuples
 
 ### 1.0.7 Released 2023-08-04
 

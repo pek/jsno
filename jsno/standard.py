@@ -16,11 +16,11 @@ import dataclasses
 import datetime
 import decimal
 import enum
+import inspect
 import pathlib
 import zoneinfo
 
 from types import NoneType
-
 
 from jsno.abc import unjsonify_sequence
 from jsno.jsonify import jsonify
@@ -137,8 +137,23 @@ def _(value, as_type):
     typecheck(value, list, as_type)
 
     if not hasattr(as_type, '__args__'):
-        # untyped tuple
-        return tuple(value)
+
+        annotations = inspect.get_annotations(as_type)
+        if annotations:
+            if len(annotations) != len(value):
+                raise_error(value, as_type)
+
+            return as_type(*(
+                unjsonify[type_](val)
+                for (val, (_, type_)) in zip(value, annotations.items())
+            ))
+
+        if as_type is tuple:
+            # untyped tuple
+            return tuple(value)
+        else:
+            # named tuple
+            return as_type(*value)
 
     if len(value) != len(arg_types):
         raise_error(value, as_type)
