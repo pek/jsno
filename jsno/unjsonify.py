@@ -3,7 +3,7 @@ import functools
 import types
 
 
-from typing import Annotated, Any, Union, Literal
+from typing import Annotated, Any, Union, Literal, NewType
 
 from jsno.utils import get_origin, get_args, get_dataclass_fields
 from jsno.variant import get_variantfamily
@@ -102,6 +102,9 @@ def unjsonify_literal(value, as_type):
 
 class Unjsonify:
     def _dispatch(self, type_):
+
+        if isinstance(type_, NewType):
+            type_ = type_.__supertype__
 
         origin = get_origin(type_) or type_
 

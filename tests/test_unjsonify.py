@@ -3,7 +3,7 @@ import datetime
 import pytest
 import zoneinfo
 
-from typing import Annotated, Any, Callable, Optional, List, Literal
+from typing import Annotated, Any, Callable, Optional, List, Literal, NewType
 
 from jsno.unjsonify import unjsonify, UnjsonifyError
 
@@ -176,3 +176,9 @@ def test_unjsonify_union_error():
 def test_unjsonify_not_defined():
     with pytest.raises(TypeError):
         unjsonify[Callable]("call")
+
+
+def test_newtype():
+    Point = NewType("Point", tuple[float, float])
+
+    assert unjsonify[Point]([1.2, 3.4]) == (1.2, 3.4)

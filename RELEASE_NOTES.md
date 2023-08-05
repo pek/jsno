@@ -6,6 +6,7 @@
 * operator // for constraints
 * joining constraints with | operator
 * anonymous Record types
+* support for TypedDict and NewType
 
 ### 1.0.7 Released 2023-08-04
 
