@@ -7,8 +7,14 @@ from jsno.unjsonify import validate_annotation
 
 
 class Constraint:
+    """
+    Base class for consraints
+    """
+
     def __new__(cls, *args, **kwargs):
         if cls is Constraint:
+            # Creating a plain Constraint actually creates a
+            # FunctionConstraint
             cls = FunctionConstraint
 
         obj = object.__new__(cls)
@@ -17,11 +23,16 @@ class Constraint:
 
     def __rfloordiv__(self, type_):
         """
+        Override the // operator: Annotate a type with this constraint.
+
         type // Constraint(...)
         """
         return Annotated[type_, self]
 
-    def __or__(self, that):
+    def __or__(self, that: "Constraint") -> "Constraint":
+        """
+        Combining constraints with or-operator
+        """
         return OrConstraint(self, that)
 
     @staticmethod
