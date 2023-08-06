@@ -7,7 +7,6 @@ Jsonification and unjsonification for standard Python types.
 * pathlib.Path
 * zoneinfo.ZoneInfo
 * enum.Enum
-* tuples
 * ranges
 
 """
@@ -16,15 +15,11 @@ import dataclasses
 import datetime
 import decimal
 import enum
-import inspect
 import pathlib
-import typing
 import zoneinfo
 
-from collections.abc import Sequence
 from types import NoneType
 
-from jsno.abc import unjsonify_sequence_factory
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
 
@@ -114,70 +109,8 @@ def _(value, as_type):
     return cast(value, as_type)
 
 
-# tuples
-
-
-@unjsonify.register_factory(tuple)
-def _(as_type):
-    """
-    Unjsonify tuples.
-
-    Tuples are a subclass of Sequence, but tuples with more
-    than one argument are treated specially.
-
-    """
-
-    arg_types = typing.get_args(as_type)
-
-    if arg_types and len(arg_types) == 2 and arg_types[1] is Ellipsis:
-        # special case for a N-length one-type tuple (tuple[T, ...])
-        # note: this accepts the empty tuple. This might not be strictly allowed
-        return unjsonify_sequence_factory(as_type)
-
-    if not hasattr(as_type, '__args__'):
-        annotations = inspect.get_annotations(as_type)
-        if annotations:
-            def specialized_typed_namedtuple(value):
-                typecheck(value, (list, Sequence), as_type)
-
-                if len(annotations) != len(value):
-                    raise_error(value, as_type)
-
-                return as_type(*(
-                    unjsonify[type_](val)
-                    for (val, (_, type_)) in zip(value, annotations.items())
-                ))
-
-            return specialized_typed_namedtuple
-
-        else:
-            # untyped tuple
-            def specialized_untyped(value):
-                if as_type is tuple:
-                   return tuple(value)
-                else:
-                    # named tuple
-                    return as_type(*value)
-
-            return specialized_untyped
-
-    # tuple types of the form tuple[int, str, ...] are not supported now
-
-    unjsonifiers = [unjsonify[type_] for type_ in arg_types]
-
-    def specialized_typed(value):
-        if len(value) != len(arg_types):
-            raise_error(value, as_type)
-
-        return as_type(
-            unjsonify_(item)
-            for (item, unjsonify_) in zip(value, unjsonifiers)
-        )
-
-    return specialized_typed
-
-
 # enums
+
 
 @jsonify.register(enum.Enum)
 def _(enum):

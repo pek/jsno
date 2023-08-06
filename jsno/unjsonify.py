@@ -180,7 +180,6 @@ class Unjsonify:
         self._cache.clear()
         return unjsonify_type.register(type_)
 
-
     def context(self, **kwargs):
         return unjsonify_context(**kwargs)
 
@@ -197,7 +196,8 @@ def get_unjsonify_union(as_type):
     Unjsonify a Union type. Tries each option at a time, and
     selects the first one that matches.
     """
-    options =  get_args(as_type)
+
+    options = get_args(as_type)
 
     def specialized(value):
         for type_option in options:
