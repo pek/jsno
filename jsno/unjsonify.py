@@ -68,8 +68,8 @@ def unjsonify_dataclass(value, as_type):
         if field.name in value
     }
     if len(kwargs) < len(value):
-        extra = {key for key in value if key not in kwargs}
-        print("EXTRA", extra)
+        extra_keys = {key for key in value if key not in kwargs}
+        raise UnjsonifyError(f"Extra keys for {as_type}: {', '.join(extra_keys)}")
 
     try:
         return as_type(**kwargs)
