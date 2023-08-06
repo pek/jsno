@@ -102,7 +102,8 @@ def unjsonify_variant(value, as_type, family):
     if variant_type is None or not issubclass(variant_type, as_type):
         raise_error(value, as_type, f"unknown {label_name} label: {label}")
 
-    return unjsonify._dispatch(variant_type)(DictWithoutKey(base=value, key=label_name))
+    func = unjsonify._dispatch(variant_type)
+    return func(DictWithoutKey(base=value, key=label_name))
 
 
 def unjsonify_literal(value, as_type):
@@ -115,12 +116,14 @@ def unjsonify_literal(value, as_type):
 
 
 class Unjsonify:
-    def _dispatch(self, type_):
+    def __init__(self):
+        self._cache = {}
 
+    def _dispatch(self, type_):
         if isinstance(type_, NewType):
             type_ = type_.__supertype__
 
-        origin = get_origin(type_) or type_
+        origin = get_origin(type_)
 
         # special cases needed for constructs in typing module, as
         # singledispatch fails cannot handle Union and Literal
@@ -131,18 +134,23 @@ class Unjsonify:
             func = unjsonify_literal
         else:
             # covers list[X], dict[K,V], etc.
-            func = unjsonify_type.dispatch(origin)
+            func = unjsonify_type.dispatch(origin or type_)
 
         # return a specialized version of the unjsonify function
         return lambda value: func(value, type_)
 
     def __getitem__(self, type_):
-        if isinstance(type_, type) and (family := get_variantfamily(type_)):
-            return lambda value: unjsonify_variant(value, type_, family)
-
-        return self._dispatch(type_)
+        unjsonify = self._cache.get(type_)
+        if unjsonify is None:
+            if isinstance(type_, type) and (family := get_variantfamily(type_)):
+                unjsonify = lambda value: unjsonify_variant(value, type_, family)
+            else:
+                unjsonify = self._dispatch(type_)
+            self._cache[type_] = unjsonify
+        return unjsonify
 
     def register(self, type_):
+        self._cache.clear()
         return unjsonify_type.register(type_)
 
     def context(self, **kwargs):
