@@ -40,8 +40,8 @@ def measure_case(n, item, as_type):
     loads_per_ms = (n / loads_time.total * 1000)
     unjsonify_per_ms = (n / unjsonify_time.total * 1000)
 
-    jsonify_bytes_per_ms = (len(dump) / jsonify_time.total)
-    dump_bytes_per_ms = (len(dump) / dump_time.total)
+    jsonify_bytes_per_ms = (bytecount / jsonify_time.total)
+    dump_bytes_per_ms = (bytecount / dump_time.total)
     loads_bytes_per_ms = (bytecount / loads_time.total)
     unjsonify_bytes_per_ms = (bytecount / unjsonify_time.total)
 
@@ -52,8 +52,8 @@ def measure_case(n, item, as_type):
         f' | dump {dump_per_ms:>6.1f} n/ms'
         f' {dump_bytes_per_ms:>5.1f} kb/ms'
         f' | loads {loads_per_ms:>6.1f} n/ms'
-        f' {unjsonify_per_ms:>6.1f} kb/ms'
-        f' | unjsonify {loads_bytes_per_ms:>6.1f} n/ms'
+        f' {loads_bytes_per_ms:>6.1f} kb/ms'
+        f' | unjsonify {unjsonify_per_ms:>6.1f} n/ms'
         f' {unjsonify_bytes_per_ms:>6.1f} kb/ms'
     )
 
@@ -149,6 +149,7 @@ def main(n=10000):
             },
             as_type=Item4
         )
+
 
 
 if __name__ == '__main__':
