@@ -3,9 +3,9 @@ import functools
 import types
 
 from collections.abc import Mapping
-from typing import Annotated, Any, Union, Literal, NewType
+from typing import Annotated, Any, Union, Literal, NewType, get_args, get_origin
 
-from jsno.utils import contextvar, get_origin, get_args, get_dataclass_fields, DictWithoutKey
+from jsno.utils import contextvar, get_dataclass_fields, DictWithoutKey
 from jsno.variant import get_variantfamily
 
 
@@ -53,9 +53,9 @@ def cast(value: Any, as_type: Any) -> Any:
 
 
 @functools.singledispatch
-def unjsonify_type(value, as_type):
+def unjsonify_type(as_type):
     if dataclasses.is_dataclass(as_type):
-        return unjsonify_dataclass(value, as_type)
+        return get_unjsonify_dataclass(as_type)
 
     raise TypeError(f"Unjsonify not defined for {as_type.__qualname__}")
 
@@ -68,51 +68,67 @@ def handle_extra_keys(value, result, as_type):
         )
 
 
-def unjsonify_dataclass(value, as_type):
-    typecheck(value, Mapping, as_type)
+def get_unjsonify_dataclass(as_type):
 
-    # collect all properties in the input value that match any of
-    # the dataclass fields
-    kwargs = {
-        field.name: unjsonify[field.type](value.get(field.name))
+    fields = [
+        (field.name, unjsonify[field.type])
         for field in get_dataclass_fields(as_type)
-        if field.name in value
-    }
-    if len(kwargs) < len(value):
-        handle_extra_keys(value, kwargs, as_type)
+    ]
 
-    try:
-        return as_type(**kwargs)
-    except TypeError as exc:
-        detail = exc.args[0]
+    def specialized(value):
+        typecheck(value, (dict, Mapping), as_type)
 
-    raise_error(value, as_type, detail)
+        # collect all properties in the input value that match any of
+        # the dataclass fields
+        kwargs = {
+            name: unjsonify_(value.get(name))
+            for (name, unjsonify_) in fields
+            if name in value
+        }
+        if len(kwargs) < len(value):
+            handle_extra_keys(value, kwargs, as_type)
 
+        try:
+            return as_type(**kwargs)
+        except TypeError as exc:
+            detail = exc.args[0]
 
-def unjsonify_variant(value, as_type, family):
-    typecheck(value, Mapping, as_type)
+        raise_error(value, as_type, detail)
 
-    label_name = family.label_name
-
-    label = value.get(label_name)
-    if label is None:
-        raise_error(value, as_type, f"missing {label}")
-
-    variant_type = family.get_variant(label)
-    if variant_type is None or not issubclass(variant_type, as_type):
-        raise_error(value, as_type, f"unknown {label_name} label: {label}")
-
-    func = unjsonify._dispatch(variant_type)
-    return func(DictWithoutKey(base=value, key=label_name))
+    return specialized
 
 
-def unjsonify_literal(value, as_type):
+def get_unjsonify_variant(as_type, family):
+
+    cache = {}
+
+    def specialized(value):
+        typecheck(value, (dict, Mapping), as_type)
+
+        label_name = family.label_name
+
+        label = value.get(label_name)
+        if label is None:
+            raise_error(value, as_type, f"missing {label}")
+
+        func = cache.get(label)
+        if func is None:
+            variant_type = family.get_variant(label)
+            if variant_type is None or not issubclass(variant_type, as_type):
+                raise_error(value, as_type, f"unknown {label_name} label: {label}")
+
+            func = unjsonify._dispatch(variant_type)
+            cache[label] = func
+
+        return func(DictWithoutKey(base=value, key=label_name))
+
+    return specialized
+
+
+def get_unjsonify_literal(as_type):
     options = get_args(as_type)
 
-    if value in options:
-        return value
-
-    raise_error(value, as_type)
+    return lambda value: value if value in options else raise_error(value, as_type)
 
 
 class Unjsonify:
@@ -124,34 +140,41 @@ class Unjsonify:
             type_ = type_.__supertype__
 
         origin = get_origin(type_)
+        if origin:
+            # special cases needed for constructs in typing module, as
+            # singledispatch fails cannot handle Union and Literal
+            if origin is Union:
+                return get_unjsonify_union(type_)
+            elif origin is Literal:
+                return get_unjsonify_literal(type_)
 
-        # special cases needed for constructs in typing module, as
-        # singledispatch fails cannot handle Union and Literal
-        if origin is Union:
-            func = unjsonify_union
-        elif origin is Literal:
-            # Cannot dispatch on Literal
-            func = unjsonify_literal
-        else:
-            # covers list[X], dict[K,V], etc.
-            func = unjsonify_type.dispatch(origin or type_)
-
-        # return a specialized version of the unjsonify function
-        return lambda value: func(value, type_)
+        # covers list[X], dict[K,V], etc.
+        return unjsonify_type.dispatch(origin or type_)(type_)
 
     def __getitem__(self, type_):
         unjsonify = self._cache.get(type_)
         if unjsonify is None:
             if isinstance(type_, type) and (family := get_variantfamily(type_)):
-                unjsonify = lambda value: unjsonify_variant(value, type_, family)
+                unjsonify = get_unjsonify_variant(type_, family)
             else:
                 unjsonify = self._dispatch(type_)
             self._cache[type_] = unjsonify
         return unjsonify
 
     def register(self, type_):
+        def decorator(func):
+            @self.register_factory(type_)
+            def _(as_type):
+                return lambda value: func(value, as_type)
+
+            return func
+
+        return decorator
+
+    def register_factory(self, type_):
         self._cache.clear()
         return unjsonify_type.register(type_)
+
 
     def context(self, **kwargs):
         return unjsonify_context(**kwargs)
@@ -163,20 +186,25 @@ class Unjsonify:
 unjsonify = Unjsonify()
 
 
-@unjsonify.register(types.UnionType)
-def unjsonify_union(value, as_type):
+@unjsonify.register_factory(types.UnionType)
+def get_unjsonify_union(as_type):
     """
     Unjsonify a Union type. Tries each option at a time, and
     selects the first one that matches.
     """
-    for type_option in get_args(as_type):
-        try:
-            return unjsonify[type_option](value)
-        except UnjsonifyError:
-            # try next option
-            continue
+    options =  get_args(as_type)
 
-    raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value)
+    def specialized(value):
+        for type_option in options:
+            try:
+                return unjsonify[type_option](value)
+            except UnjsonifyError:
+                # try next option
+                continue
+
+        raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value)
+
+    return specialized
 
 
 @unjsonify.register(Any)

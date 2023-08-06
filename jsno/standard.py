@@ -135,7 +135,7 @@ def _(value, as_type):
 
     # tuple types of the form tuple[int, str, ...] are not supported now
 
-    typecheck(value, Sequence, as_type)
+    typecheck(value, (list, Sequence), as_type)
 
     if not hasattr(as_type, '__args__'):
 

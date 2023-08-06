@@ -8,7 +8,7 @@ import typing
 from collections.abc import ByteString, Mapping, Sequence, Set
 
 from jsno.jsonify import jsonify
-from jsno.typeddict import unjsonify_typeddict
+from jsno.typeddict import unjsonify_typeddict_factory
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
 from jsno.utils import get_args
 
@@ -21,15 +21,12 @@ def _(value):
     return {str(jsonify(key)): jsonify(val) for (key, val) in value.items()}
 
 
-@unjsonify.register(Mapping)
-def _(value, as_type):
+@unjsonify.register_factory(Mapping)
+def _(as_type):
     """
     Unjsonify any Mapping type. Expects the input value to be
     a JSON object (dict).
     """
-
-    typecheck(value, Mapping, as_type)
-
     arg_types = get_args(as_type)
 
     if arg_types:
@@ -38,19 +35,30 @@ def _(value, as_type):
         unjsonify_key = unjsonify[arg_types[0]]
         unjsonify_val = unjsonify[arg_types[1]]
 
-        as_dict = {
-            unjsonify_key(key): unjsonify_val(val)
-            for (key, val) in value.items()
-        }
-        return cast(as_dict, as_type)
-    elif type(as_type) is typing._TypedDictMeta:
+        def unjsonify_dict_with_types(value):
+            typecheck(value, (dict, Mapping), as_type)
+
+            as_dict = {
+                unjsonify_key(key): unjsonify_val(val)
+                for (key, val) in value.items()
+            }
+            return cast(as_dict, as_type)
+
+        return unjsonify_dict_with_types
+
+    if type(as_type) is typing._TypedDictMeta:
         # TypedDicts must be caught at this stage, as they are
         # non-istantiable subclasses of dict.
-        return unjsonify_typeddict(value, as_type)
-    else:
-        # monotyped case: convert from dict
+        return unjsonify_typeddict_factory(as_type)
+
+    # monotyped case: convert from dict
+    def unjonify_untyped_mapping(value):
+        if not isinstance(value, (dict, Mapping)):
+            raise_error(value, as_type)
+
         return cast(value, as_type)
 
+    return unjonify_untyped_mapping
 
 # Sequence
 
@@ -62,7 +70,7 @@ def jsonify_sequence(value):
 
 @unjsonify.register(Sequence)
 def unjsonify_sequence(value, as_type):
-    typecheck(value, Sequence, as_type)
+    typecheck(value, (list, Sequence), as_type)
 
     arg_types = get_args(as_type)
 
