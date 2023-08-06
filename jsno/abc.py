@@ -28,7 +28,7 @@ def _(value, as_type):
     a JSON object (dict).
     """
 
-    typecheck(value, dict, as_type)
+    typecheck(value, Mapping, as_type)
 
     arg_types = get_args(as_type)
 
@@ -62,7 +62,7 @@ def jsonify_sequence(value):
 
 @unjsonify.register(Sequence)
 def unjsonify_sequence(value, as_type):
-    typecheck(value, list, as_type)
+    typecheck(value, Sequence, as_type)
 
     arg_types = get_args(as_type)
 

@@ -2,10 +2,10 @@ import dataclasses
 import functools
 import types
 
-
+from collections.abc import Mapping
 from typing import Annotated, Any, Union, Literal, NewType
 
-from jsno.utils import get_origin, get_args, get_dataclass_fields
+from jsno.utils import get_origin, get_args, get_dataclass_fields, DictWithoutKey
 from jsno.variant import get_variantfamily
 
 
@@ -58,7 +58,7 @@ def unjsonify_type(value, as_type):
 
 
 def unjsonify_dataclass(value, as_type):
-    typecheck(value, dict, as_type)
+    typecheck(value, Mapping, as_type)
 
     # collect all properties in the input value that match any of
     # the dataclass fields
@@ -67,6 +67,10 @@ def unjsonify_dataclass(value, as_type):
         for field in get_dataclass_fields(as_type)
         if field.name in value
     }
+    if len(kwargs) < len(value):
+        extra = {key for key in value if key not in kwargs}
+        print("EXTRA", extra)
+
     try:
         return as_type(**kwargs)
     except TypeError as exc:
@@ -76,7 +80,7 @@ def unjsonify_dataclass(value, as_type):
 
 
 def unjsonify_variant(value, as_type, family):
-    typecheck(value, dict, as_type)
+    typecheck(value, Mapping, as_type)
 
     label_name = family.label_name
 
@@ -88,7 +92,7 @@ def unjsonify_variant(value, as_type, family):
     if variant_type is None or not issubclass(variant_type, as_type):
         raise_error(value, as_type, f"unknown {label_name} label: {label}")
 
-    return unjsonify._dispatch(variant_type)(value)
+    return unjsonify._dispatch(variant_type)(DictWithoutKey(base=value, key=label_name))
 
 
 def unjsonify_literal(value, as_type):

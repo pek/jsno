@@ -20,6 +20,7 @@ import inspect
 import pathlib
 import zoneinfo
 
+from collections.abc import Sequence
 from types import NoneType
 
 from jsno.abc import unjsonify_sequence
@@ -134,7 +135,7 @@ def _(value, as_type):
 
     # tuple types of the form tuple[int, str, ...] are not supported now
 
-    typecheck(value, list, as_type)
+    typecheck(value, Sequence, as_type)
 
     if not hasattr(as_type, '__args__'):
 

@@ -3,6 +3,8 @@ import functools
 import types
 import typing
 
+from collections.abc import Mapping
+
 
 union_types = (
     typing.Union,  # Union[X] or Optional[X]
@@ -44,3 +46,28 @@ def is_optional(type_) -> bool:
         get_origin(type_) in union_types and
         type(None) in get_args(type_)
     )
+
+
+@dataclasses.dataclass(slots=True)
+class DictWithoutKey(Mapping):
+    base: dict
+    key: str
+
+    def get(self, key, default=None):
+        if key == self.key:
+            return default
+        else:
+            return self.base[key]
+
+    def __getitem__(self, key):
+        if key == self.key:
+            raise KeyError(key)
+        return self.base[key]
+
+    def __iter__(self):
+        for it in self.base:
+            if it != self.key:
+                yield it
+
+    def __len__(self):
+        return len(self.base) - 1
