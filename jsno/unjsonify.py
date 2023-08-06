@@ -54,7 +54,7 @@ def unjsonify_type(value, as_type):
     if dataclasses.is_dataclass(as_type):
         return unjsonify_dataclass(value, as_type)
 
-    raise TypeError(f"Unjsonify not defined for {as_type}")
+    raise TypeError(f"Unjsonify not defined for {as_type.__qualname__}")
 
 
 def unjsonify_dataclass(value, as_type):
@@ -69,7 +69,7 @@ def unjsonify_dataclass(value, as_type):
     }
     if len(kwargs) < len(value):
         extra_keys = {key for key in value if key not in kwargs}
-        raise UnjsonifyError(f"Extra keys for {as_type}: {', '.join(extra_keys)}")
+        raise UnjsonifyError(f"Extra keys for {as_type.__qualname__}: {', '.join(extra_keys)}")
 
     try:
         return as_type(**kwargs)

@@ -143,7 +143,7 @@ def test_unjsonify_with_unjsonify_classmethod():
 
 def test_ujsonify_with_missing_properties_error():
     with pytest.raises(UnjsonifyError):
-        unjsonify[Brick]({"color": "Yellow"})
+        unjsonify[Brick]({"color": "Red"})
 
 
 def test_ujsonify_with_not_dict_error():
@@ -153,7 +153,12 @@ def test_ujsonify_with_not_dict_error():
 
 def test_unjsonify_dataclass_error():
     with pytest.raises(UnjsonifyError):
-        unjsonify[Box]({})
+        unjsonify[Brick]({})
+
+
+def test_unjsonify_dataclass_extra_key_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Brick]({"color": "Red", "width": 1, "height": 1, "matrial": "xxx"})
 
 
 @dataclasses.dataclass
