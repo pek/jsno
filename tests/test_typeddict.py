@@ -34,15 +34,22 @@ def test_unjsonify_nontotal_typed_dict():
         unjsonify[ApiKey]({"value": "XXX", "treated_at": "2023-08-05T07:22:33"})
 
 
-def test_namedtuple():
+class LogEntry(NamedTuple):
+    date: datetime
+    message: str
 
-    class LogEntry(NamedTuple):
-        date: datetime
-        message: str
+entry = LogEntry(date=datetime(2023, 8, 5, 8, 32, 10), message="fail")
+json = ["2023-08-05T08:32:10", "fail"]
 
-    entry = LogEntry(date=datetime(2023, 8, 5, 8, 32, 10), message="fail")
-    json = ["2023-08-05T08:32:10", "fail"]
 
+def test_jsnoify_namedtuple():
     assert jsonify(entry) == json
 
+
+def test_unjsonify_namedtuple():
     assert unjsonify[LogEntry](json) == entry
+
+
+def test_unjsonify_namedtuple_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[LogEntry](["2023-08-05T08:32:10"])
