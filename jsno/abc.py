@@ -67,17 +67,25 @@ def jsonify_sequence(value):
     return [jsonify(val) for val in value]
 
 
-@unjsonify.register(Sequence)
-def unjsonify_sequence(value, as_type):
-    typecheck(value, (list, Sequence), as_type)
-
+@unjsonify.register_factory(Sequence)
+def unjsonify_sequence_factory(as_type):
     arg_types = typing.get_args(as_type)
 
     if not arg_types:
-        return cast(value, as_type)
+        def specialized_untyped(value):
+            typecheck(value, (list, Sequence), as_type)
+            return cast(value, as_type)
+
+        return specialized_untyped
+
     else:
         unjsonify_item = unjsonify[arg_types[0]]
-        return cast([unjsonify_item(item) for item in value], as_type)
+
+        def specialized_typed(value):
+            typecheck(value, (list, Sequence), as_type)
+            return cast([unjsonify_item(item) for item in value], as_type)
+
+        return specialized_typed
 
 
 # Set
@@ -100,7 +108,7 @@ def _(value):
     return jsonify_sequence(value)
 
 
-unjsonify.register(Set)(unjsonify_sequence)
+unjsonify.register_factory(Set)(unjsonify_sequence_factory)
 
 
 # ByteString abstract base class

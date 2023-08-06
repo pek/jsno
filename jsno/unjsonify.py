@@ -149,7 +149,12 @@ class Unjsonify:
                 return get_unjsonify_literal(type_)
 
         # covers list[X], dict[K,V], etc.
-        return unjsonify_type.dispatch(origin or type_)(type_)
+        try:
+            func = unjsonify_type.dispatch(origin or type_)
+        except TypeError:
+            raise UnjsonifyError(f"Cannot unjsonify {type_}")
+
+        return func(type_)
 
     def __getitem__(self, type_):
         unjsonify = self._cache.get(type_)
