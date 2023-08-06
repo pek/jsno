@@ -38,6 +38,7 @@ class LogEntry(NamedTuple):
     date: datetime
     message: str
 
+
 entry = LogEntry(date=datetime(2023, 8, 5, 8, 32, 10), message="fail")
 json = ["2023-08-05T08:32:10", "fail"]
 

@@ -1,5 +1,6 @@
 import dataclasses
 import functools
+import threading
 import types
 import typing
 
@@ -71,3 +72,42 @@ class DictWithoutKey(Mapping):
 
     def __len__(self):
         return len(self.base) - 1
+
+
+class Context:
+    def __init__(self, contextvar, values):
+        self.contextvar = contextvar
+        self.values = values
+        self.old_values = {}
+
+    def __enter__(self):
+        for (key, val) in self.values.items():
+            self.old_values[key] = getattr(self.contextvar, key)
+            setattr(self.contextvar, key, val)
+
+    def __exit__(self, type, value, tb):
+        for (key, val) in self.old_values.items():
+            setattr(self.contextvar, key, val)
+
+
+def contextvar(**kwargs):
+    defaults = kwargs
+
+    threadlocal = threading.local()
+
+    class Contextvar:
+
+        def __getattr__(self, key):
+            try:
+                return getattr(threadlocal, key)
+            except AttributeError:
+                pass
+            return defaults[key]
+
+        def __setattr__(self, key, value):
+            setattr(threadlocal, key, value)
+
+        def __call__(self, **kwargs):
+            return Context(self, kwargs)
+
+    return Contextvar()

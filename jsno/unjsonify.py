@@ -5,8 +5,11 @@ import types
 from collections.abc import Mapping
 from typing import Annotated, Any, Union, Literal, NewType
 
-from jsno.utils import get_origin, get_args, get_dataclass_fields, DictWithoutKey
+from jsno.utils import contextvar, get_origin, get_args, get_dataclass_fields, DictWithoutKey
 from jsno.variant import get_variantfamily
+
+
+unjsonify_context = contextvar(on_extra_key="error")
 
 
 class UnjsonifyError(TypeError):
@@ -57,6 +60,14 @@ def unjsonify_type(value, as_type):
     raise TypeError(f"Unjsonify not defined for {as_type.__qualname__}")
 
 
+def handle_extra_keys(value, result, as_type):
+    if unjsonify_context.on_extra_key == "error":
+        extra_keys = {key for key in value if key not in result}
+        raise UnjsonifyError(
+            f"Extra keys for {as_type.__qualname__}: {', '.join(extra_keys)}"
+        )
+
+
 def unjsonify_dataclass(value, as_type):
     typecheck(value, Mapping, as_type)
 
@@ -68,8 +79,7 @@ def unjsonify_dataclass(value, as_type):
         if field.name in value
     }
     if len(kwargs) < len(value):
-        extra_keys = {key for key in value if key not in kwargs}
-        raise UnjsonifyError(f"Extra keys for {as_type.__qualname__}: {', '.join(extra_keys)}")
+        handle_extra_keys(value, kwargs, as_type)
 
     try:
         return as_type(**kwargs)
@@ -134,6 +144,12 @@ class Unjsonify:
 
     def register(self, type_):
         return unjsonify_type.register(type_)
+
+    def context(self, **kwargs):
+        return unjsonify_context(**kwargs)
+
+    def ignore_extra_keys(self):
+        return self.context(on_extra_key="ignore")
 
 
 unjsonify = Unjsonify()

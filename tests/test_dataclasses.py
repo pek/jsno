@@ -161,6 +161,12 @@ def test_unjsonify_dataclass_extra_key_error():
         unjsonify[Brick]({"color": "Red", "width": 1, "height": 1, "matrial": "xxx"})
 
 
+def test_unjsonify_dataclass_extra_key_ignore():
+    with unjsonify.ignore_extra_keys():
+        brick = unjsonify[Brick]({"color": "Red", "width": 1, "height": 1, "matrial": "xxx"})
+        assert brick == Brick(color=Color.Red, width=1, height=1)
+
+
 @dataclasses.dataclass
 class User:
     username: str
