@@ -5,7 +5,7 @@ import types
 from collections.abc import Mapping
 from typing import Annotated, Any, Union, Literal, NewType, get_args, get_origin
 
-from jsno.utils import contextvar, get_dataclass_fields, DictWithoutKey
+from jsno.utils import contextvar, DictWithoutKey
 from jsno.variant import get_variantfamily
 
 
@@ -72,7 +72,7 @@ def get_unjsonify_dataclass(as_type):
 
     fields = [
         (field.name, unjsonify[field.type])
-        for field in get_dataclass_fields(as_type)
+        for field in dataclasses.fields(as_type)
     ]
 
     def specialized(value):

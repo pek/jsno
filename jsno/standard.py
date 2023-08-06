@@ -18,6 +18,7 @@ import decimal
 import enum
 import inspect
 import pathlib
+import typing
 import zoneinfo
 
 from collections.abc import Sequence
@@ -26,7 +27,6 @@ from types import NoneType
 from jsno.abc import unjsonify_sequence
 from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
-from jsno.utils import get_args
 
 
 # marking types to be jsonified as strings
@@ -127,7 +127,7 @@ def _(value, as_type):
 
     """
 
-    arg_types = get_args(as_type)
+    arg_types = typing.get_args(as_type)
     if arg_types and len(arg_types) == 2 and arg_types[1] is Ellipsis:
         # special case for a N-length one-type tuple (tuple[T, ...])
         # note: this accepts the empty tuple. This might not be strictly allowed

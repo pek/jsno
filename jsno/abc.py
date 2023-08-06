@@ -10,7 +10,6 @@ from collections.abc import ByteString, Mapping, Sequence, Set
 from jsno.jsonify import jsonify
 from jsno.typeddict import unjsonify_typeddict_factory
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
-from jsno.utils import get_args
 
 
 # Mapping
@@ -27,7 +26,7 @@ def _(as_type):
     Unjsonify any Mapping type. Expects the input value to be
     a JSON object (dict).
     """
-    arg_types = get_args(as_type)
+    arg_types = typing.get_args(as_type)
 
     if arg_types:
         # the mapping has arguments. Expects it to have key and value
@@ -72,7 +71,7 @@ def jsonify_sequence(value):
 def unjsonify_sequence(value, as_type):
     typecheck(value, (list, Sequence), as_type)
 
-    arg_types = get_args(as_type)
+    arg_types = typing.get_args(as_type)
 
     if not arg_types:
         return cast(value, as_type)
