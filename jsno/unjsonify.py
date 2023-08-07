@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import Annotated, Any, Union, Literal, NewType, get_args, get_origin
 
 from jsno.extra_data import get_extra_data_configuration, Ignore
+from jsno.property_name import resolve_field_name
 from jsno.utils import contextvar, DictWithoutKey
 from jsno.variant import get_variantfamily
 
@@ -81,7 +82,7 @@ def handle_extra_keys(value, result, as_type):
 def get_unjsonify_dataclass(as_type):
 
     fields = [
-        (field.name, unjsonify[field.type])
+        (field.name, resolve_field_name(field), unjsonify[field.type])
         for field in dataclasses.fields(as_type)
     ]
 
@@ -91,9 +92,9 @@ def get_unjsonify_dataclass(as_type):
         # collect all properties in the input value that match any of
         # the dataclass fields
         kwargs = {
-            name: unjsonify_(value.get(name))
-            for (name, unjsonify_) in fields
-            if name in value
+            name: unjsonify_(value.get(json_name))
+            for (name, json_name, unjsonify_) in fields
+            if json_name in value
         }
         if len(kwargs) < len(value):
             handle_extra_keys(value, kwargs, as_type)

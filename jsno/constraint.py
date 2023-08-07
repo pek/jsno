@@ -1,12 +1,13 @@
 import re
 
 from dataclasses import dataclass
-from typing import Annotated, Any, Callable
+from typing import Any, Callable
 
 from jsno.unjsonify import validate_annotation
+from jsno.utils import Annotation
 
 
-class Constraint:
+class Constraint(Annotation):
     """
     Base class for consraints
     """
@@ -20,14 +21,6 @@ class Constraint:
         obj = object.__new__(cls)
         obj.__init__(*args, **kwargs)
         return obj
-
-    def __rfloordiv__(self, type_):
-        """
-        Override the // operator: Annotate a type with this constraint.
-
-        type // Constraint(...)
-        """
-        return Annotated[type_, self]
 
     def __or__(self, that: "Constraint") -> "Constraint":
         """

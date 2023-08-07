@@ -1,5 +1,6 @@
 import dataclasses
 import threading
+import typing
 
 from collections.abc import Mapping
 
@@ -66,3 +67,13 @@ def contextvar(**kwargs):
             return Context(self, kwargs)
 
     return Contextvar()
+
+
+class Annotation:
+    def __rfloordiv__(self, type_):
+        """
+        Override the // operator: Annotate a type with this annotation.
+
+        type // Annotation(...)
+        """
+        return typing.Annotated[type_, self]

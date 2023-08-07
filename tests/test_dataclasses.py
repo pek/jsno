@@ -9,7 +9,8 @@ import pytest
 
 from typing import Any, Dict, List
 
-from jsno import extra_data, jsonify, unjsonify, jsonify_with_method, UnjsonifyError
+import jsno
+from jsno import jsonify, unjsonify, UnjsonifyError
 
 
 class Color(enum.Enum):
@@ -115,7 +116,7 @@ def test_unjsonify_dataclass():
 
 
 @dataclasses.dataclass
-@jsonify_with_method
+@jsno.jsonify_with_method
 class EmailAddress:
     user: str
     domain: str
@@ -198,7 +199,7 @@ def test_unjsonifty_dataclass_with_default_value():
 
 
 @dataclasses.dataclass
-@extra_data(property="metadata")
+@jsno.extra_data(property="metadata")
 class MetaUser:
     username: str
     metadata: dict
@@ -219,7 +220,7 @@ def test_unjsonify_dataclass_with_extra_data_property():
 
 
 @dataclasses.dataclass
-@extra_data(ignore=True)
+@jsno.extra_data(ignore=True)
 class Config:
     username: str
 
@@ -244,3 +245,23 @@ def test_optional_property_without_default():
     assert json == {"name": "thing", "age": None}
 
     assert unjsonify[Thing](json) == thing
+
+
+@dataclasses.dataclass
+class FieldRequest:
+    name: str // jsno.property_name("field-name")  # noqa
+    type: str // jsno.property_name("field-type") // jsno.Constraint.len(min=1)  # noqa
+
+
+def test_jsonify_property_name():
+    assert (
+        jsonify(FieldRequest(name="NAME", type="TYPE")) ==
+        {"field-name": "NAME", "field-type": "TYPE"}
+    )
+
+
+def test_unjsonify_property_name():
+    assert (
+        unjsonify[FieldRequest]({"field-name": "NAME", "field-type": "TYPE"}) ==
+        FieldRequest(name="NAME", type="TYPE")
+    )

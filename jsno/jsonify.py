@@ -2,6 +2,7 @@ import dataclasses
 import functools
 
 from jsno.extra_data import get_extra_data_configuration
+from jsno.property_name import resolve_field_name
 from jsno.variant import get_variantfamily
 
 
@@ -35,10 +36,11 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
                 continue
 
         if field.name == extra_data_property:
+            # extrapolate extra data to the result object
             for (key, subval) in val.items():
                 result[key] = jsonify(subval)
         else:
-            result[field.name] = jsonify(val)
+            result[resolve_field_name(field)] = jsonify(val)
 
     return result
 
