@@ -464,6 +464,12 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### Version 1.1.1 (2023-08-07)
+
+* property name annotations
+* fix optional value jsonification when no default
+* performance improvement for dataclass jsonification
+
 ### Version 1.1.0 (2023-08-07)
 
 * regular expression constraints
