@@ -34,6 +34,7 @@ unjsonify class method.
 """
 
 from jsno.constraint import Constraint
+from jsno.extra_data import extra_data
 from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
@@ -55,6 +56,7 @@ __all__ = [
     "jsonify",
     "jsonify_as_string",
     "jsonify_with_method",
+    "extra_data",
     "get_variantfamily",
     "loads",
     "unjsonify",

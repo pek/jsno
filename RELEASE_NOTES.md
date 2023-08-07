@@ -6,10 +6,11 @@
 * operator // for constraints
 * joining constraints with | operator
 * anonymous Record types
+* support for datetime.timezone and datetime.timedelta
 * support for TypedDict and NewType
 * support for untyped tuples and namedtuples
 * optimizations for unjsonify
-* unjsonify context for ignoring extra properties
+* unjsonify context for- ignoring extra properties
 
 ### 1.0.7 Released 2023-08-04
 

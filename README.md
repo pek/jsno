@@ -151,12 +151,14 @@ _variant family_.
 * tuples
 * ranges
 * enums
-* date and datetime objects (converted to ISO-formatted strings)
+* date and, time and datetime objects (converted to ISO-formatted strings)
+* timedelta and timezone
 * complex
 * decimal.Decimal (converted to JSON strings)
 * pathlib.Path
 * zoneinfo.ZoneInfo
 * Literal (only int and str literals)
+* NamedTuple
 * TypedDict
 * NewType
 
@@ -223,6 +225,24 @@ def save_game(database, state: GameState):
 def load_game(database, identifier: str) -> GameState:
     json = database.load(identifier)
     return unjsonify[GameState](json)
+```
+
+## Unjsonify context
+
+By default, the unjsonify raises an error (UjsonifyError), if the JSON object
+that is being converted to a dataclass contains extra keys. This is often the
+most appropriate behavior, for example when converting the request body of an API
+request, it's best to let the caller know that they might have mistyped property
+names in their data. However, sometimes, it's best to just ignore the extra properties,
+for example when reading persistent data that could have obsolete properties in it
+that are not reflected by the dataclass definition.
+
+The extra key behavior can be controlled by running the unjsonification inside
+the approproate _context_:
+
+```py
+with unjsonify.ignore_extra_keys:
+    state = unjsonify[GameState](data)
 ```
 
 ## Constraints

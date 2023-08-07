@@ -5,6 +5,7 @@ import types
 from collections.abc import Mapping
 from typing import Annotated, Any, Union, Literal, NewType, get_args, get_origin
 
+from jsno.extra_data import get_extra_data_configuration, Ignore
 from jsno.utils import contextvar, DictWithoutKey
 from jsno.variant import get_variantfamily
 
@@ -61,7 +62,16 @@ def unjsonify_type(as_type):
 
 
 def handle_extra_keys(value, result, as_type):
-    if unjsonify_context.on_extra_key == "error":
+    extra_data_property = get_extra_data_configuration.dispatch(as_type)(as_type)
+    if extra_data_property is not None:
+        if extra_data_property is Ignore:
+            return
+
+        result[extra_data_property] = {
+            key: value[key] for key in value if key not in result
+        }
+
+    elif unjsonify_context.on_extra_key == "error":
         extra_keys = {key for key in value if key not in result}
         raise UnjsonifyError(
             f"Extra keys for {as_type.__qualname__}: {', '.join(extra_keys)}"

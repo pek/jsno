@@ -2,6 +2,7 @@ import dataclasses
 import functools
 import typing
 
+from jsno.extra_data import get_extra_data_configuration
 from jsno.utils import is_optional
 from jsno.variant import get_variantfamily
 
@@ -24,6 +25,8 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
         # first add the variant label to the jsonified result
         result[family.label_name] = family.get_label(value_type)
 
+    extra_data_property = get_extra_data_configuration(value)
+
     for field in dataclasses.fields(value_type):
         val = getattr(value, field.name)
 
@@ -33,7 +36,11 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
             if is_optional(typing.cast(typing.Hashable, field.type)):
                 continue
 
-        result[field.name] = jsonify(val)
+        if field.name == extra_data_property:
+            for (key, subval) in val.items():
+                result[key] = jsonify(subval)
+        else:
+            result[field.name] = jsonify(val)
 
     return result
 

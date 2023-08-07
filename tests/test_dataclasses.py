@@ -9,7 +9,7 @@ import pytest
 
 from typing import Any, Dict, List
 
-from jsno import jsonify, unjsonify, jsonify_with_method, UnjsonifyError
+from jsno import extra_data, jsonify, unjsonify, jsonify_with_method, UnjsonifyError
 
 
 class Color(enum.Enum):
@@ -174,7 +174,7 @@ class User:
     metadata: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
 
 
-def test_jsonifty_dataclass_with_default_value():
+def test_jsonify_dataclass_with_default_value():
     assert (
         jsonify(User(username="usr")) ==
         {"username": "usr", "password": "pAssW0rd", "metadata": []}
@@ -195,3 +195,37 @@ def test_unjsonifty_dataclass_with_default_value():
     user = unjsonify[User]({"username": "usr", "password": "", "metadata": [{"key": 100}]})
 
     assert user == User(username="usr", password="", metadata=[{"key": 100}])
+
+
+@dataclasses.dataclass
+@extra_data(property="metadata")
+class MetaUser:
+    username: str
+    metadata: dict
+
+
+def test_jsonify_dataclass_with_extra_data_property():
+    assert (
+        jsonify(MetaUser(username="usr", metadata={"tags": ["yes"]})) ==
+        {"username": "usr", "tags": ["yes"]}
+    )
+
+
+def test_unjsonify_dataclass_with_extra_data_property():
+    assert (
+        unjsonify[MetaUser]({"username": "usr", "tags": ["yes"]}) ==
+        MetaUser(username="usr", metadata={"tags": ["yes"]})
+    )
+
+
+@dataclasses.dataclass
+@extra_data(ignore=True)
+class Config:
+    username: str
+
+
+def test_unjsonify_dataclass_with_ignore_extra_data():
+    assert (
+        unjsonify[Config]({"username": "usr", "tags": ["yes"]}) ==
+        Config(username="usr")
+    )
