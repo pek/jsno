@@ -17,6 +17,7 @@ import dataclasses
 import decimal
 import enum
 import pathlib
+import re
 import zoneinfo
 
 from types import NoneType
@@ -133,7 +134,6 @@ def _(value, as_type):
 
 jsonify_as_string(zoneinfo.ZoneInfo, exceptions=(zoneinfo.ZoneInfoNotFoundError))
 
-
 # decimal
 
 
@@ -183,3 +183,16 @@ def _(value, as_type):
         raise_error(value, as_type, "Range step must not be zero")
 
     return as_type(it.start, it.stop, it.step or 1)
+
+
+# re.Pattern
+
+
+@jsonify.register(re.Pattern)
+def _(value):
+    return value.pattern
+
+
+@unjsonify.register(re.Pattern)
+def _(value, as_type):
+    return re.compile(value)

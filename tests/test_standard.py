@@ -1,5 +1,6 @@
 import decimal
 import pathlib
+import re
 import zoneinfo
 
 import pytest
@@ -70,3 +71,11 @@ def test_jsonify_range():
 def test_jsonify_range_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[range]({"start": 1, "stop": 6, "step": 0})
+
+
+def test_jsonify_re_pattern():
+    assert jsonify(re.compile("[a-z]+")) == "[a-z]+"
+
+
+def test_unjsonify_re_pattern():
+    assert unjsonify[re.Pattern]("[a-z]+") == re.compile("[a-z]+")

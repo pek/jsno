@@ -156,6 +156,7 @@ _variant family_.
 * complex
 * decimal.Decimal (converted to JSON strings)
 * pathlib.Path
+* re.Pattern
 * zoneinfo.ZoneInfo
 * Literal (only int and str literals)
 * NamedTuple

@@ -7,6 +7,7 @@
 * joining constraints with | operator
 * anonymous Record types
 * support for datetime.timezone and datetime.timedelta
+* support for re.Pattern
 * support for TypedDict and NewType
 * support for untyped tuples and namedtuples
 * optimizations for unjsonify
