@@ -6,6 +6,7 @@ import json
 import pathlib
 
 import jsno
+from jsno import jsonify, unjsonify
 
 
 def test_domain_record_example():
@@ -79,3 +80,17 @@ def test_random_example():
     b = rng.gauss()
 
     assert a == b
+
+
+@dataclass
+class APIRequest:
+    class_: str // jsno.property_name("class")  # noqa
+    instance_count: int // jsno.property_name("instance-count")  # noqa
+
+
+def test_api_request_example():
+    request = APIRequest(class_="Request", instance_count=1)
+    json = jsonify(request)
+
+    assert json == {"class": "Request", "instance-count": 1}
+    assert unjsonify[APIRequest](json) == request

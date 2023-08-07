@@ -307,6 +307,31 @@ class LiteralValue:
     value: str // (LiteralInt | LiteralString)
 ```
 
+## Customizing field names
+
+It could be necessary to map the field names of a dataclass to something other
+than the ones defined in the Python class. For example, the classes could be
+modeling an API that uses property names that are not compatible with Python's
+naming rules, like using _hyphenated-names_, or names that are reserved in Python,
+such as "class". The field name can be customized with an `property_name` annotation
+that can be attached to a type similar to a constraint:
+
+```py
+@dataclass
+class APIRequest:
+    class_: str // jsno.property_name("class")
+    instance_count: int // jsno.property_name("instance-count")
+
+
+request = APIRequest(class_="Request", instance_count=1)
+json = jsonify(request)
+
+assert json == {"class": "Request", "instance-count": 1}
+assert unjsonify[APIRequest](json) == request
+```
+
+
+
 ## Anonymous record types
 
 Sometimes it's better to define substructures in complex data inline, without

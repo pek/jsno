@@ -1,6 +1,5 @@
 import dataclasses
 import functools
-import typing
 
 from jsno.extra_data import get_extra_data_configuration
 from jsno.property_name import resolve_field_name
@@ -66,22 +65,26 @@ class DataclassJsonification:
         )
 
 
-# could use functools.cache, but directly using a dict is a
-# little bit faster
-jsonifications = {}
+class JsonificationCache(dict):
+    """
+    Specialized dictionary that creates jsonifications on demand
+
+    Could use functools.cache, but directly using this is a
+    little bit faster
+    """
+    def __missing__(self, key: type):
+        self[key] = DataclassJsonification.create(key)
+        return self[key]
+
+
+jsonifications = JsonificationCache()
 
 
 def jsonify_dataclass(value) -> dict[str, JSON]:
     """
     Jsonify a value whose type is a dataclass.
     """
-    type_ = typing.cast(typing.Hashable, type(value))
-
-    specialized = jsonifications.get(type_)
-    if specialized is None:
-        specialized = DataclassJsonification.create(type_)
-        jsonifications[type_] = specialized
-
+    specialized = jsonifications[type(value)]
     return specialized.jsonify(value)
 
 
