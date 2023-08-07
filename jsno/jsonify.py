@@ -1,9 +1,7 @@
 import dataclasses
 import functools
-import typing
 
 from jsno.extra_data import get_extra_data_configuration
-from jsno.utils import is_optional
 from jsno.variant import get_variantfamily
 
 
@@ -33,7 +31,7 @@ def jsonify_dataclass(value) -> dict[str, JSON]:
         # skip optional values that are None
         if val is None:
             # must cast the type to satisfy type checks
-            if is_optional(typing.cast(typing.Hashable, field.type)):
+            if field.default is None:
                 continue
 
         if field.name == extra_data_property:

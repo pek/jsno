@@ -229,3 +229,18 @@ def test_unjsonify_dataclass_with_ignore_extra_data():
         unjsonify[Config]({"username": "usr", "tags": ["yes"]}) ==
         Config(username="usr")
     )
+
+
+@dataclasses.dataclass
+class Thing:
+    name: str
+    age: int | None
+
+
+def test_optional_property_without_default():
+    thing = Thing(name="thing", age=None)
+
+    json = jsonify(thing)
+    assert json == {"name": "thing", "age": None}
+
+    assert unjsonify[Thing](json) == thing

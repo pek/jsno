@@ -1,29 +1,7 @@
 import dataclasses
-import functools
 import threading
-import types
-import typing
 
 from collections.abc import Mapping
-
-
-union_types = (
-    typing.Union,  # Union[X] or Optional[X]
-    types.UnionType,  # X | Y or X | None
-)
-
-
-@functools.cache
-def is_optional(type_) -> bool:
-    """
-    Check if a type object is instance of optional type
-    (something that could be None)
-    """
-
-    return (
-        typing.get_origin(type_) in union_types and
-        type(None) in typing.get_args(type_)
-    )
 
 
 @dataclasses.dataclass(slots=True)
