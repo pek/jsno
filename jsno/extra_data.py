@@ -2,7 +2,7 @@ import functools
 
 
 @functools.singledispatch
-def get_extra_data_configuration(arg):
+def _get_extra_data_configuration(arg):
     return None
 
 
@@ -20,10 +20,14 @@ def extra_data(property=None, ignore=None):
         property = Ignore
 
     def decorator(cls):
-        @get_extra_data_configuration.register(cls)
+        @_get_extra_data_configuration.register(cls)
         def _(arg):
             return property
 
         return cls
 
     return decorator
+
+
+def get_extra_data_configuration(type_):
+    return _get_extra_data_configuration.dispatch(type_)(type_)

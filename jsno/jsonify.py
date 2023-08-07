@@ -1,5 +1,6 @@
 import dataclasses
 import functools
+import typing
 
 from jsno.extra_data import get_extra_data_configuration
 from jsno.property_name import resolve_field_name
@@ -12,37 +13,75 @@ valid JSON types.
 JSON = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
 
 
+@dataclasses.dataclass(slots=True, frozen=True)
+class DataclassJsonification:
+    """
+    Specialized datacalass jsonifier
+    """
+
+    label_name: str | None
+    label: str | None
+
+    extra_data_property: str | None
+
+    fields: list
+
+    def jsonify(self, value) -> dict[str, JSON]:
+        result: dict[str, JSON] = {}
+
+        # if the value's class is a member of a variant family,
+        # first add the variant label to the jsonified result
+        if self.label_name:
+            result[self.label_name] = self.label
+
+        # add regular fields
+        for (field_name, json_name, optional) in self.fields:
+            val = getattr(value, field_name)
+            if not (val is None and optional):
+                result[json_name] = jsonify(val)
+
+        # if extra data is defined, add it's contents
+        if self.extra_data_property:
+            if val := getattr(value, self.extra_data_property):
+                for (key, subval) in val.items():
+                    result[key] = jsonify(subval)
+
+        return result
+
+    @staticmethod
+    def create(type_):
+        family = get_variantfamily(type_)
+        extra_data_property = get_extra_data_configuration(type_)
+
+        return DataclassJsonification(
+            label_name=family and family.label_name,
+            label=family and family.get_label(type_),
+            extra_data_property=extra_data_property,
+            fields=[
+                (field.name, resolve_field_name(field), field.default is None)
+                for field in dataclasses.fields(type_)
+                if field.name != extra_data_property
+            ]
+        )
+
+
+# could use functools.cache, but directly using a dict is a
+# little bit faster
+jsonifications = {}
+
+
 def jsonify_dataclass(value) -> dict[str, JSON]:
     """
     Jsonify a value whose type is a dataclass.
     """
-    result: dict[str, JSON] = {}
-    value_type: type = type(value)
+    type_ = typing.cast(typing.Hashable, type(value))
 
-    if family := get_variantfamily(value_type):
-        # if the value's class is a member of a variant family,
-        # first add the variant label to the jsonified result
-        result[family.label_name] = family.get_label(value_type)
+    specialized = jsonifications.get(type_)
+    if specialized is None:
+        specialized = DataclassJsonification.create(type_)
+        jsonifications[type_] = specialized
 
-    extra_data_property = get_extra_data_configuration(value)
-
-    for field in dataclasses.fields(value_type):
-        val = getattr(value, field.name)
-
-        # skip optional values that are None
-        if val is None:
-            # must cast the type to satisfy type checks
-            if field.default is None:
-                continue
-
-        if field.name == extra_data_property:
-            # extrapolate extra data to the result object
-            for (key, subval) in val.items():
-                result[key] = jsonify(subval)
-        else:
-            result[resolve_field_name(field)] = jsonify(val)
-
-    return result
+    return specialized.jsonify(value)
 
 
 def jsonify_list(value: list) -> list[JSON]:

@@ -63,7 +63,7 @@ def unjsonify_type(as_type):
 
 
 def handle_extra_keys(value, result, as_type):
-    extra_data_property = get_extra_data_configuration.dispatch(as_type)(as_type)
+    extra_data_property = get_extra_data_configuration(as_type)
     if extra_data_property is not None:
         if extra_data_property is Ignore:
             return
