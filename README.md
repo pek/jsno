@@ -1,4 +1,5 @@
 # jsno
+
 Convert Python data to and from JSON-compatible data structures.
 
 Jsno provides functions that turn any Python values into JSON-compatible
@@ -459,3 +460,30 @@ pip install jsno
 ```
 
 Jsno has no 3rd party dependencies.
+
+
+## Release Notes
+
+### Version 1.1.0 (2023-08-07)
+
+* regular expression constraints
+* operator // for constraints
+* joining constraints with | operator
+* anonymous Record types
+* support for datetime.timezone and datetime.timedelta
+* support for re.Pattern
+* support for TypedDict and NewType
+* support for untyped tuples and namedtuples
+* unjsonify context for ignoring extra properties
+* specifying target for extra properties in dataclasses
+* performance improvements for unjsonify
+
+### Version 1.0.7 (2023-08-04)
+
+* support for typing.Annotated
+* constraint annotations
+
+### Version 1.0.6 (2023-08-03)
+
+* support for datetime.time
+
