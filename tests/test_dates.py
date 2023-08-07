@@ -103,5 +103,56 @@ def test_unjsonify_time_failure():
 
 
 def test_unjsonify_date_failure():
-    with pytest.raises(TypeError):
+    with pytest.raises(UnjsonifyError):
         unjsonify[datetime.date]("today")
+
+
+def test_jsonify_timedelta_days_only():
+    assert jsonify(datetime.timedelta(days=23)) == "23 days, 0:00:00"
+
+
+def test_jsonify_timedelta_microsecond():
+    assert jsonify(datetime.timedelta(microseconds=1)) == "0:00:00.000001"
+
+
+def test_jsonify_timedelta_negative_days():
+    assert jsonify(datetime.timedelta(days=-123)) == "-123 days, 0:00:00"
+
+
+def test_unjsonify_timedelta_days_only():
+    assert unjsonify[datetime.timedelta]("23 days, 0:00:00") == datetime.timedelta(days=23)
+
+
+def test_unjsonify_timedelta_negative():
+    assert (
+        unjsonify[datetime.timedelta]("-10 days, 1:23:45") ==
+        datetime.timedelta(days=-11, hours=22, minutes=36, seconds=15)
+    )
+
+
+def test_unjsonify_timedelta_failure():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[datetime.timedelta]("-10 days, 24:23:45")
+
+
+def test_unjsonify_timezone_utc():
+    assert unjsonify[datetime.timezone]("UTC") == datetime.timezone.utc
+
+
+def test_unjsonify_timezone_utc_positive():
+    assert (
+        unjsonify[datetime.timezone]("UTC+01:00:00") ==
+        datetime.timezone(datetime.timedelta(hours=1))
+    )
+
+
+def test_unjsonify_timezone_utc_negative():
+    assert (
+        unjsonify[datetime.timezone]("UTC-03:30:00") ==
+        datetime.timezone(datetime.timedelta(hours=-3, minutes=-30))
+    )
+
+
+def test_unjsonify_timezone_failure():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[datetime.timezone]("UTC03:30:00")

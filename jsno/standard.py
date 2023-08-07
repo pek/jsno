@@ -3,6 +3,8 @@ Jsonification and unjsonification for standard Python types.
 
 * datetime.datetime
 * datetime.date
+* datetime.time
+* datetime.timezone
 * decimal.Decimal
 * pathlib.Path
 * zoneinfo.ZoneInfo
@@ -12,7 +14,6 @@ Jsonification and unjsonification for standard Python types.
 """
 
 import dataclasses
-import datetime
 import decimal
 import enum
 import pathlib
@@ -126,83 +127,6 @@ def _(value, as_type):
         pass
 
     raise_error(value, as_type)
-
-
-# datetime.date
-
-
-@jsonify.register(datetime.date)
-def _(date):
-    return f"{date.year}-{date.month:02}-{date.day:02}"
-
-
-@unjsonify.register(datetime.date)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    try:
-        (ys, ms, ds) = value.split("-")
-        return as_type(int(ys), int(ms), int(ds))
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise_error(value, as_type, detail)
-
-
-# datetime.time
-
-
-@jsonify.register(datetime.time)
-def _(value):
-    return str(value)
-
-
-@unjsonify.register(datetime.time)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-
-    try:
-        return datetime.time.fromisoformat(value)
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise_error(value, as_type, detail)
-
-
-# datetime.datetime
-
-
-UTC = zoneinfo.ZoneInfo("UTC")
-
-
-def is_utc_datetime(dt) -> bool:
-    return (
-        dt.tzinfo is not None and
-        dt.tzinfo.utcoffset(dt).total_seconds() == 0.0
-    )
-
-
-@jsonify.register(datetime.datetime)
-def _(value):
-    """
-    Format the datetime as a string. Uses isoformat, except  when
-    the timezone is UTC, attaches "Z" as the timezone, instead of "+00:00"
-    """
-
-    if is_utc_datetime(value):
-        return f"{value.date()}T{value.time()}Z"
-    else:
-        return value.isoformat()
-
-
-@unjsonify.register(datetime.datetime)
-def _(value, as_type):
-    typecheck(value, str, as_type)
-    try:
-        return as_type.fromisoformat(value)
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise_error(value, as_type, detail)
 
 
 # zoneinfo

@@ -44,10 +44,11 @@ from jsno.variant import get_variantfamily, variantfamily, variantlabel, Variant
 
 # import to register jsonifiers
 import jsno.abc  # noqa
+import jsno.datetime  # noqa
 import jsno.tuple  # noqa
 
 
-__version__ = "1.0.8"
+__version__ = "1.1.0"
 
 __all__ = [
     "dumps",

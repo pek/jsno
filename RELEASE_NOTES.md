@@ -1,6 +1,6 @@
 # Release Notes
 
-### 1.0.8 Released 2023-08-05
+### 1.1.0 Released 2023-08-07
 
 * regular expression constraints
 * operator // for constraints
@@ -8,6 +8,8 @@
 * anonymous Record types
 * support for TypedDict and NewType
 * support for untyped tuples and namedtuples
+* optimizations for unjsonify
+* unjsonify context for ignoring extra properties
 
 ### 1.0.7 Released 2023-08-04
 

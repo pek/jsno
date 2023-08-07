@@ -20,6 +20,7 @@ def unwrap_type(type_):
 
 @functools.cache
 def unjsonify_typeddict_factory(as_type):
+
     annotations = [
         (key, unjsonify[unwrap_type(type_)], key in as_type.__required_keys__)
         for (key, type_) in inspect.get_annotations(as_type).items()
