@@ -252,10 +252,12 @@ class FieldRequest:
     name: str // jsno.property_name("field-name")  # noqa
     type: str // jsno.property_name("field-type") // jsno.Constraint.len(min=1)  # noqa
 
+    nojson: str // jsno.property_name(None) = "nope"
+
 
 def test_jsonify_property_name():
     assert (
-        jsonify(FieldRequest(name="NAME", type="TYPE")) ==
+        jsonify(FieldRequest(name="NAME", type="TYPE", nojson="nonono")) ==
         {"field-name": "NAME", "field-type": "TYPE"}
     )
 
@@ -265,3 +267,10 @@ def test_unjsonify_property_name():
         unjsonify[FieldRequest]({"field-name": "NAME", "field-type": "TYPE"}) ==
         FieldRequest(name="NAME", type="TYPE")
     )
+
+
+def test_unjsonify_property_name_failure():
+    json = {"field-name": "NAME", "field-type": "TYPE", "nojson": "no"}
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[FieldRequest](json)

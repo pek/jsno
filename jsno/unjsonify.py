@@ -82,8 +82,9 @@ def handle_extra_keys(value, result, as_type):
 def get_unjsonify_dataclass(as_type):
 
     fields = [
-        (field.name, resolve_field_name(field), unjsonify[field.type])
+        (field.name, json_name, unjsonify[field.type])
         for field in dataclasses.fields(as_type)
+        if (json_name := resolve_field_name(field))
     ]
 
     def specialized(value):

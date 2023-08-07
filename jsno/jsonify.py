@@ -58,9 +58,10 @@ class DataclassJsonification:
             label=family and family.get_label(type_),
             extra_data_property=extra_data_property,
             fields=[
-                (field.name, resolve_field_name(field), field.default is None)
+                (field.name, json_name, field.default is None)
                 for field in dataclasses.fields(type_)
                 if field.name != extra_data_property
+                if (json_name := resolve_field_name(field))
             ]
         )
 
