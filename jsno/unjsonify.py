@@ -11,7 +11,7 @@ from jsno.utils import contextvar, DictWithoutKey
 from jsno.variant import get_variantfamily
 
 
-unjsonify_context = contextvar(on_extra_key="error")
+unjsonify_context = contextvar(on_extra_key="error", self_type=None)
 
 
 class UnjsonifyError(TypeError):
@@ -79,16 +79,33 @@ def handle_extra_keys(value, result, as_type):
         )
 
 
-unjsonify_build_context = contextvar(self_type=None)
+def contains_self_type(type_):
+    return (
+        type_ is Self or
+        any(contains_self_type(arg) for arg in get_args(type_))
+    )
+
+
+def get_unjsonify_for_field(field_type, self_type):
+    unjsonify_ = unjsonify[field_type]
+
+    if not contains_self_type(field_type):
+        return unjsonify_
+
+    def wrapped(value):
+        with unjsonify_context(self_type=self_type):
+            return unjsonify_(value)
+
+    return wrapped
 
 
 def get_unjsonify_dataclass(as_type):
-    with unjsonify_build_context(self_type=as_type):
-        fields = [
-            (field.name, json_name, unjsonify[field.type])
-            for field in dataclasses.fields(as_type)
-            if (json_name := resolve_field_name(field))
-        ]
+
+    fields = [
+        (field.name, json_name, get_unjsonify_for_field(field.type, as_type))
+        for field in dataclasses.fields(as_type)
+        if (json_name := resolve_field_name(field))
+    ]
 
     def specialized(value):
         typecheck(value, (dict, Mapping), as_type)
@@ -132,7 +149,7 @@ def get_unjsonify_variant(as_type, family):
             if variant_type is None or not issubclass(variant_type, as_type):
                 raise_error(value, as_type, f"unknown {label_name} label: {label}")
 
-            func = unjsonify._dispatch(variant_type)
+            func = unjsonify.specialize(variant_type)
             cache[label] = func
 
         return func(DictWithoutKey(base=value, key=label_name))
@@ -146,20 +163,23 @@ def get_unjsonify_literal(as_type):
     return lambda value: value if value in options else raise_error(value, as_type)
 
 
+def unjsonify_self(value):
+    self_type = unjsonify_context.self_type
+    if self_type is None:
+        raise TypeError("Self used without context")
+    return unjsonify[self_type](value)
+
+
 class Unjsonify:
     def __init__(self):
         self._cache = {}
 
-    def _dispatch(self, type_):
+    def specialize(self, type_):
         if isinstance(type_, NewType):
             type_ = type_.__supertype__
-        elif type_ is Self:
-            self_type = unjsonify_build_context.self_type
-            if self_type is None:
-                # coverage incorrectly reports this branch as not covered
-                raise TypeError("Self type used without context")  # pragma: no cover
 
-            return lambda value: unjsonify[self_type](value)
+        if type_ is Self:
+            return unjsonify_self
 
         origin = get_origin(type_)
         if origin:
@@ -178,13 +198,16 @@ class Unjsonify:
 
         return func(type_)
 
+    def _dispatch(self, type_):
+        if isinstance(type_, type) and (family := get_variantfamily(type_)):
+            return get_unjsonify_variant(type_, family)
+        else:
+            return self.specialize(type_)
+
     def __getitem__(self, type_):
         unjsonify = self._cache.get(type_)
         if unjsonify is None:
-            if isinstance(type_, type) and (family := get_variantfamily(type_)):
-                unjsonify = get_unjsonify_variant(type_, family)
-            else:
-                unjsonify = self._dispatch(type_)
+            unjsonify = self._dispatch(type_)
             self._cache[type_] = unjsonify
         return unjsonify
 

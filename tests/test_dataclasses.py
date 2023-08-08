@@ -300,3 +300,16 @@ def test_unjsonify_self_referential_dataclass():
 def test_unjsonify_self_without_context_error():
     with pytest.raises(TypeError):
         print(unjsonify[Self]({}))
+
+
+@dataclasses.dataclass
+class ExtendedFolder(Folder):
+    extra_flag: bool = True
+
+
+def test_self_type_in_dataclass_with_inheritance():
+    json = {"name": "main", "subfolders": [{"name": "sub", "subfolders": []}]}
+    assert (
+        unjsonify[ExtendedFolder](json) ==
+        ExtendedFolder(name="main", subfolders=[ExtendedFolder(name="sub")])
+    )
