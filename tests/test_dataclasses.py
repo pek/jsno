@@ -313,3 +313,40 @@ def test_self_type_in_dataclass_with_inheritance():
         unjsonify[ExtendedFolder](json) ==
         ExtendedFolder(name="main", subfolders=[ExtendedFolder(name="sub")])
     )
+
+
+@dataclasses.dataclass
+class Person:
+    name: str
+    friends: list["Friend"]
+
+
+@dataclasses.dataclass
+class Friend:
+    person: Person
+    nickname: str
+
+
+def test_unjsonify_mutually_recursive_dataclasses():
+    json = {
+        "name": "X",
+        "friends": [
+            {
+                "person": {"name": "Y", "friends": []},
+                "nickname": "nick"
+            }
+        ]
+    }
+
+    assert (
+        unjsonify[Person](json) ==
+        Person(
+            name="X",
+            friends=[
+                Friend(
+                    person=Person(name="Y", friends=[]),
+                    nickname="nick"
+                )
+            ]
+        )
+    )
