@@ -102,7 +102,7 @@ def test_ujsonify_namedtuple():
 
 
 def test_unjsonify_malformed_type_error():
-    with pytest.raises(UnjsonifyError):
+    with pytest.raises(TypeError):
         unjsonify[tuple[bool, str, ...]]([True, "x"])
 
 

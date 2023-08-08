@@ -106,3 +106,13 @@ def test_or_constraint():
 
     with pytest.raises(UnjsonifyError):
         unjsonify[list[LiteralValue]]([{"value": "foo"}])
+
+
+@dataclass
+class LiteralValues:
+    values: list[str // LiteralString]
+
+
+def test_embedded_constraint():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[list[LiteralValues]]([{"values": ["foo"]}])

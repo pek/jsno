@@ -1,6 +1,9 @@
 import dataclasses
 import functools
+import threading
+import time
 import types
+import typing
 
 from collections.abc import Mapping
 from typing import Annotated, Any, Union, Literal, NewType, Self, get_args, get_origin
@@ -55,7 +58,7 @@ def cast(value: Any, as_type: Any) -> Any:
 
 
 @functools.singledispatch
-def unjsonify_type(as_type):
+def unjsonify_factory(as_type):
     if dataclasses.is_dataclass(as_type):
         return get_unjsonify_dataclass(as_type)
 
@@ -99,13 +102,30 @@ def get_unjsonify_for_field(field_type, self_type):
     return wrapped
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class ReferThrough:
+    as_type: type
+
+    def __call__(self, value):
+        return unjsonify[self.as_type](value)
+
+
 def get_unjsonify_dataclass(as_type):
 
-    fields = [
-        (field.name, json_name, get_unjsonify_for_field(field.type, as_type))
-        for field in dataclasses.fields(as_type)
-        if (json_name := resolve_field_name(field))
-    ]
+    if as_type in unjsonify._context_stack:
+        return ReferThrough(as_type)
+
+    hints = typing.get_type_hints(as_type, include_extras=True)
+
+    unjsonify._context_stack.add(as_type)
+    try:
+        fields = [
+            (field.name, json_name, get_unjsonify_for_field(hints[field.name], as_type))
+            for field in dataclasses.fields(as_type)
+            if (json_name := resolve_field_name(field))
+        ]
+    finally:
+        unjsonify._context_stack.remove(as_type)
 
     def specialized(value):
         typecheck(value, (dict, Mapping), as_type)
@@ -173,6 +193,9 @@ def unjsonify_self(value):
 class Unjsonify:
     def __init__(self):
         self._cache = {}
+        self._lock = threading.RLock()
+        self._context_stack = set()
+        self._delay = 0
 
     def specialize(self, type_):
         if isinstance(type_, NewType):
@@ -191,10 +214,11 @@ class Unjsonify:
                 return get_unjsonify_literal(type_)
 
         # covers list[X], dict[K,V], etc.
+
         try:
-            func = unjsonify_type.dispatch(origin or type_)
+            func = unjsonify_factory.dispatch(origin or type_)
         except TypeError:
-            raise UnjsonifyError(f"Cannot unjsonify {type_}")
+            raise UnjsonifyError(f"Cannot unjsonify as {repr(type_)} of type {type(type_)}")
 
         return func(type_)
 
@@ -206,10 +230,28 @@ class Unjsonify:
 
     def __getitem__(self, type_):
         unjsonify = self._cache.get(type_)
-        if unjsonify is None:
+        if unjsonify is not None:
+            return unjsonify
+
+        try:
+            acquired = self._lock.acquire(blocking=False)
+            if not acquired:
+                self._lock.acquire(blocking=True)
+                unjsonify = self._cache.get(type_)
+                if unjsonify:
+                    return unjsonify
+
             unjsonify = self._dispatch(type_)
-            self._cache[type_] = unjsonify
-        return unjsonify
+            if not isinstance(unjsonify, ReferThrough):
+
+                if self._delay:
+                    time.sleep(self._delay)
+
+                self._cache[type_] = unjsonify
+
+            return unjsonify
+        finally:
+            self._lock.release()
 
     def register(self, type_):
         def decorator(func):
@@ -223,7 +265,7 @@ class Unjsonify:
 
     def register_factory(self, type_):
         self._cache.clear()
-        return unjsonify_type.register(type_)
+        return unjsonify_factory.register(type_)
 
     def context(self, **kwargs):
         return unjsonify_context(**kwargs)
@@ -242,12 +284,15 @@ def get_unjsonify_union(as_type):
     selects the first one that matches.
     """
 
-    options = get_args(as_type)
+    options = [
+        unjsonify[type_option]
+        for type_option in get_args(as_type)
+    ]
 
     def specialized(value):
-        for type_option in options:
+        for try_option in options:
             try:
-                return unjsonify[type_option](value)
+                return try_option(value)
             except UnjsonifyError:
                 # try next option
                 continue
