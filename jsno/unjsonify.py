@@ -3,10 +3,12 @@ import functools
 import threading
 import time
 import types
-import typing
 
 from collections.abc import Mapping
-from typing import Annotated, Any, Union, Literal, NewType, Self, get_args, get_origin
+from typing import (
+    Annotated, Any, Callable, Union, Literal, NewType, Self,
+    get_args, get_origin, get_type_hints
+)
 
 from jsno.extra_data import get_extra_data_configuration, Ignore
 from jsno.property_name import resolve_field_name
@@ -102,12 +104,20 @@ def get_unjsonify_for_field(field_type, self_type):
     return wrapped
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(slots=True)
 class ReferThrough:
+    """
+    Special class that defers unjsonify resolution to
+    the call-time, used for handling recursive definitions.
+    """
     as_type: type
+    specialized: Callable | None = None
 
     def __call__(self, value):
-        return unjsonify[self.as_type](value)
+        if self.specialized is None:
+            self.specialized = unjsonify[self.as_type]
+
+        return self.specialized(value)
 
 
 def get_unjsonify_dataclass(as_type):
@@ -115,7 +125,7 @@ def get_unjsonify_dataclass(as_type):
     if as_type in unjsonify._context_stack:
         return ReferThrough(as_type)
 
-    hints = typing.get_type_hints(as_type, include_extras=True)
+    hints = get_type_hints(as_type, include_extras=True)
 
     unjsonify._context_stack.add(as_type)
     try:
@@ -222,7 +232,7 @@ class Unjsonify:
 
         return func(type_)
 
-    def _dispatch(self, type_):
+    def _dispatch(self, type_) -> Callable:
         if isinstance(type_, type) and (family := get_variantfamily(type_)):
             return get_unjsonify_variant(type_, family)
         else:
