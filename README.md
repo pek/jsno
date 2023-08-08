@@ -489,6 +489,12 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### Version 1.1.2 (2023-08-08)
+
+* support for Self type
+* support for recursive and mutually recursive dataclasses
+* handle type hints in dataclasses given as strings
+
 ### Version 1.1.1 (2023-08-07)
 
 * property name annotations
