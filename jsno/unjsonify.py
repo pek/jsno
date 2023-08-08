@@ -3,7 +3,7 @@ import functools
 import types
 
 from collections.abc import Mapping
-from typing import Annotated, Any, Union, Literal, NewType, get_args, get_origin
+from typing import Annotated, Any, Union, Literal, NewType, Self, get_args, get_origin
 
 from jsno.extra_data import get_extra_data_configuration, Ignore
 from jsno.property_name import resolve_field_name
@@ -79,13 +79,16 @@ def handle_extra_keys(value, result, as_type):
         )
 
 
-def get_unjsonify_dataclass(as_type):
+unjsonify_build_context = contextvar(self_type=None)
 
-    fields = [
-        (field.name, json_name, unjsonify[field.type])
-        for field in dataclasses.fields(as_type)
-        if (json_name := resolve_field_name(field))
-    ]
+
+def get_unjsonify_dataclass(as_type):
+    with unjsonify_build_context(self_type=as_type):
+        fields = [
+            (field.name, json_name, unjsonify[field.type])
+            for field in dataclasses.fields(as_type)
+            if (json_name := resolve_field_name(field))
+        ]
 
     def specialized(value):
         typecheck(value, (dict, Mapping), as_type)
@@ -150,6 +153,13 @@ class Unjsonify:
     def _dispatch(self, type_):
         if isinstance(type_, NewType):
             type_ = type_.__supertype__
+        elif type_ is Self:
+            self_type = unjsonify_build_context.self_type
+            if self_type is None:
+                # coverage incorrectly reports this branch as not covered
+                raise TypeError("Self type used without context")  # pragma: no cover
+
+            return lambda value: unjsonify[self_type](value)
 
         origin = get_origin(type_)
         if origin:

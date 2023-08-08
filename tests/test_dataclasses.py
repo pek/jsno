@@ -7,7 +7,7 @@ import dataclasses
 import enum
 import pytest
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Self
 
 import jsno
 from jsno import jsonify, unjsonify, UnjsonifyError
@@ -274,3 +274,29 @@ def test_unjsonify_property_name_failure():
 
     with pytest.raises(UnjsonifyError):
         unjsonify[FieldRequest](json)
+
+
+@dataclasses.dataclass
+class Folder:
+    name: str
+    subfolders: list[Self] = dataclasses.field(default_factory=list)
+
+
+folder = Folder(name="main", subfolders=[Folder(name="sub")])
+
+
+def test_jsonify_self_referential_dataclass():
+    assert (
+        jsonify(folder) ==
+        {"name": "main", "subfolders": [{"name": "sub", "subfolders": []}]}
+    )
+
+
+def test_unjsonify_self_referential_dataclass():
+    json = {"name": "main", "subfolders": [{"name": "sub", "subfolders": []}]}
+    assert unjsonify[Folder](json) == folder
+
+
+def test_unjsonify_self_without_context_error():
+    with pytest.raises(TypeError):
+        print(unjsonify[Self]({}))
