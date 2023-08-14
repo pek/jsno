@@ -11,3 +11,5 @@ def test_dict_without_key():
     assert "y" in it
     assert "x" not in it
     assert it.get("x") is None
+
+    assert it.get("y") == 200

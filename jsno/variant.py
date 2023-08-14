@@ -64,8 +64,24 @@ class VariantFamily:
         self._class_for_label.clear()
 
 
+class OrphanVariant:
+    def __init__(self, cls, label_name, label):
+        self.cls = cls
+        self.label_name = label_name
+        self.label = label
+
+    def get_variant(self, label: str) -> type | None:
+        if label == self.label:
+            return self.cls
+        else:
+            return None
+
+    def get_label(self, cls: type) -> str:
+        return self.label
+
+
 @functools.singledispatch
-def _get_variantfamily(cls: type) -> VariantFamily | None:
+def _get_variantfamily(cls: type) -> VariantFamily | OrphanVariant | None:
     """
     Get the VariantFamily instance corresponding to a class,
     or None, if it is not part of a variant hierarchy
@@ -73,12 +89,18 @@ def _get_variantfamily(cls: type) -> VariantFamily | None:
     return None
 
 
-def get_variantfamily(cls: type) -> VariantFamily | None:
+def get_variantfamily(cls: type) -> VariantFamily | OrphanVariant | None:
     """
     Get the variant family that the argument type is part of, or
     None if it is not part of any.
     """
     return _get_variantfamily.dispatch(cls)(None)
+
+
+def register_variantfamily(cls, family):
+    @_get_variantfamily.register(cls)
+    def _(cls):
+        return family
 
 
 def variantfamily(label: str = "label") -> Callable[[type], type]:
@@ -97,27 +119,33 @@ def variantfamily(label: str = "label") -> Callable[[type], type]:
             )
 
         family = VariantFamily(cls, label)
-
-        @_get_variantfamily.register(cls)
-        def _(cls):
-            return family
-
+        register_variantfamily(cls, family)
         return cls
 
     return decorator
 
 
-def variantlabel(label: str) -> Callable[[type], type]:
+def variantlabel(label: str | None = None, key: str | None = None) -> Callable[[type], type]:
     """
     Decorator for specifying the variant label of a class
     """
 
     def decorator(cls: type) -> type:
-        family = get_variantfamily(cls)
-        if not family:
-            raise TypeError(f"Not member of a variant family: {cls}")
+        the_label = cls.__name__ if label is None else label
 
-        family.register_variant(cls, label)
+        family = get_variantfamily(cls)
+        if family and isinstance(family, VariantFamily):
+            if key is not None and key != family.label_name:
+                raise ValueError("Key must match the family label name")
+
+            family.register_variant(cls, the_label)
+        else:
+            if key is None:
+                raise ValueError("Key required for orphan variant")
+
+            family = OrphanVariant(cls, key, the_label)
+            register_variantfamily(cls, family)
+
         return cls
 
     return decorator

@@ -2,12 +2,13 @@ import inspect
 import typing
 
 from collections.abc import Sequence
+from typing import Callable
 
 from jsno.abc import unjsonify_sequence_factory
 from jsno.unjsonify import unjsonify, typecheck, raise_error
 
 
-def unjsonify_typed_factory(as_type):
+def unjsonify_typed_factory(as_type: type) -> Callable:
     arg_types = typing.get_args(as_type)
 
     if arg_types and len(arg_types) == 2 and arg_types[1] is Ellipsis:

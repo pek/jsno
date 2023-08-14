@@ -1,6 +1,8 @@
 import decimal
 import pathlib
 import re
+import types
+import uuid
 import zoneinfo
 
 import pytest
@@ -79,3 +81,35 @@ def test_jsonify_re_pattern():
 
 def test_unjsonify_re_pattern():
     assert unjsonify[re.Pattern]("[a-z]+") == re.compile("[a-z]+")
+
+
+def test_jsonify_simplenamespace():
+    namespace = types.SimpleNamespace(key="value", numbers=[1, 2, 3])
+
+    assert jsonify(namespace) == {"key": "value", "numbers": [1, 2, 3]}
+
+
+def test_unjsonify_simplenamespace():
+    assert (
+        unjsonify[types.SimpleNamespace]({"key": "value", "numbers": [1, 2, 3]}) ==
+        types.SimpleNamespace(key="value", numbers=[1, 2, 3])
+    )
+
+
+def test_jsonify_uuid():
+    assert(
+        jsonify(uuid.UUID("12345678-1234-5678-1234-AABBCCDDEEFF")) ==
+        "12345678-1234-5678-1234-aabbccddeeff"
+    )
+
+
+def test_unjsonify_uuid():
+    assert(
+        unjsonify[uuid.UUID]("12345678-1234-5678-1234-aabbccddeeff") ==
+        uuid.UUID("12345678-1234-5678-1234-AABBCCDDEEFF")
+    )
+
+
+def test_unjsonify_uuid_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[uuid.UUID]("12345678-1234-5678-1234-aabbccddxxxx")

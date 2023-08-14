@@ -112,10 +112,16 @@ def test_jsonify_variant_not_dict_error():
 
 
 def test_variantlabel_error():
-
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         @variantlabel('not-a-variant')
         class Foo:
+            pass
+
+
+def test_variantlabel_mismatch_error():
+    with pytest.raises(ValueError):
+        @variantlabel("Foo", key="foo")
+        class FooExpression(Expression):
             pass
 
 
@@ -133,3 +139,8 @@ def test_variant_label_overlap_error():
         @variantlabel(label='NOT')
         class NotAgain(Expression):
             pass
+
+
+def test_jsonify_variant_with_label_as_dict():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Expression]({"type": {"di": "ct"}})

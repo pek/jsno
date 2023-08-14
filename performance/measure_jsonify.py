@@ -13,9 +13,11 @@ from tests.test_dataclasses import Box, Brick, Color, Material
 def measure_case(n, item, as_type):
     name = item['name']
 
-    items = {
-        "items": [item for i in range(n)]
-    }
+    @dataclasses.dataclass
+    class Items:
+        items: list[as_type]
+
+    items = Items(items=[item for i in range(n)])
 
     with measure_time() as jsonify_time:
         jsonified = jsonify(items)
@@ -27,10 +29,6 @@ def measure_case(n, item, as_type):
 
     with measure_time() as loads_time:
         loaded = json.loads(dump)
-
-    @dataclasses.dataclass
-    class Items:
-        items: list[as_type]
 
     with measure_time() as unjsonify_time:
         unjsonify[Items](loaded)

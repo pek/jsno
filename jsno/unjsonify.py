@@ -7,34 +7,16 @@ import types
 from collections.abc import Mapping
 from typing import (
     Annotated, Any, Callable, Union, Literal, NewType, Self,
-    get_args, get_origin, get_type_hints
+    get_args, get_origin, get_type_hints,
+    Required, NotRequired,
 )
 
-from jsno.extra_data import get_extra_data_configuration, Ignore
-from jsno.property_name import resolve_field_name
-from jsno.utils import contextvar, DictWithoutKey
+from jsno.fields_unjsonifier import (
+    UnjsonifyError, SchemaField, create_unjsonifier, typecheck, raise_error, unjsonify_context
+)
+from jsno.property_name import get_property_name
+from jsno.utils import DictWithoutKey
 from jsno.variant import get_variantfamily
-
-
-unjsonify_context = contextvar(on_extra_key="error", self_type=None)
-
-
-class UnjsonifyError(TypeError):
-    pass
-
-
-def raise_error(value: Any, as_type: Any, detail=None):
-    raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value, detail)
-
-
-def typecheck(value: Any, jsontype: type, as_type: Any) -> None:
-    """
-    Check if the value is an instance of the type given as `jsontype`
-    and if not, raise an appropriate UnjsonifyError
-    """
-
-    if not isinstance(value, jsontype):
-        raise_error(value, as_type)
 
 
 def cast(value: Any, as_type: Any) -> Any:
@@ -67,41 +49,14 @@ def unjsonify_factory(as_type):
     raise TypeError(f"Unjsonify not defined for {as_type.__qualname__}")
 
 
-def handle_extra_keys(value, result, as_type):
-    extra_data_property = get_extra_data_configuration(as_type)
-    if extra_data_property is not None:
-        if extra_data_property is Ignore:
-            return
-
-        result[extra_data_property] = {
-            key: value[key] for key in value if key not in result
-        }
-
-    elif unjsonify_context.on_extra_key == "error":
-        extra_keys = {key for key in value if key not in result}
-        raise UnjsonifyError(
-            f"Extra keys for {as_type.__qualname__}: {', '.join(extra_keys)}"
-        )
-
-
-def contains_self_type(type_):
+def contains_self_type(type_: type) -> bool:
+    """
+    Check if a type contains the Self type in it.
+    """
     return (
         type_ is Self or
         any(contains_self_type(arg) for arg in get_args(type_))
     )
-
-
-def get_unjsonify_for_field(field_type, self_type):
-    unjsonify_ = unjsonify[field_type]
-
-    if not contains_self_type(field_type):
-        return unjsonify_
-
-    def wrapped(value):
-        with unjsonify_context(self_type=self_type):
-            return unjsonify_(value)
-
-    return wrapped
 
 
 @dataclasses.dataclass(slots=True)
@@ -120,36 +75,55 @@ class ReferThrough:
         return self.specialized(value)
 
 
-def get_unjsonify_dataclass(as_type):
+def get_unjsonify_for_field(field_type, self_type):
 
-    if as_type in unjsonify._context_stack:
-        return ReferThrough(as_type)
+    # Required check for TypedDicts
+    origin = get_origin(field_type)
+    if origin is NotRequired or origin is Required:
+        field_type = get_args(field_type)[0]
 
-    hints = get_type_hints(as_type, include_extras=True)
+    unjsonify_ = unjsonify[field_type]
+
+    if not contains_self_type(field_type):
+        return unjsonify_
+
+    def wrapped(value):
+        with unjsonify_context(self_type=self_type):
+            return unjsonify_(value)
+
+    return wrapped
+
+
+def resolve_field_unjsonifiers(as_type, required_keys=frozenset()):
+    type_hints = get_type_hints(as_type, include_extras=True)
 
     unjsonify._context_stack.add(as_type)
     try:
-        fields = [
-            (field.name, json_name, get_unjsonify_for_field(hints[field.name], as_type))
-            for field in dataclasses.fields(as_type)
-            if (json_name := resolve_field_name(field))
+        return [
+            SchemaField(
+                name=name,
+                json_name=json_name,
+                default=Required if name in required_keys else NotRequired,
+                unjsonify=get_unjsonify_for_field(type_, as_type)
+            )
+            for (name, type_) in type_hints.items()
+            if (json_name := get_property_name(type_, name))
         ]
     finally:
         unjsonify._context_stack.remove(as_type)
 
+
+def get_unjsonify_dataclass(as_type):
+    if as_type in unjsonify._context_stack:
+        return ReferThrough(as_type)
+
+    unjsonifier = create_unjsonifier(
+        as_type=as_type,
+        fields=resolve_field_unjsonifiers(as_type),
+    )
+
     def specialized(value):
-        typecheck(value, (dict, Mapping), as_type)
-
-        # collect all properties in the input value that match any of
-        # the dataclass fields
-        kwargs = {
-            name: unjsonify_(value.get(json_name))
-            for (name, json_name, unjsonify_) in fields
-            if json_name in value
-        }
-        if len(kwargs) < len(value):
-            handle_extra_keys(value, kwargs, as_type)
-
+        kwargs = unjsonifier.unjsonify_fields(value)
         try:
             return as_type(**kwargs)
         except TypeError as exc:
@@ -160,29 +134,36 @@ def get_unjsonify_dataclass(as_type):
     return specialized
 
 
-def get_unjsonify_variant(as_type, family):
+def get_unjsonify_variant(as_type, family) -> Callable:
+    """
+    Get the unjsonify function specialized for a variant family
+    """
 
-    cache = {}
+    # mapping from labels to corresponding unjsonifiers
+    cache: dict[str, Callable] = {}
+
+    label_name = family.label_name
 
     def specialized(value):
         typecheck(value, (dict, Mapping), as_type)
 
-        label_name = family.label_name
-
+        # get the label property from the value
         label = value.get(label_name)
-        if label is None:
+        if not isinstance(label, str):
             raise_error(value, as_type, f"missing {label}")
 
-        func = cache.get(label)
-        if func is None:
+        unjsonify_variant = cache.get(label)
+        if unjsonify_variant is None:
             variant_type = family.get_variant(label)
             if variant_type is None or not issubclass(variant_type, as_type):
                 raise_error(value, as_type, f"unknown {label_name} label: {label}")
 
-            func = unjsonify.specialize(variant_type)
-            cache[label] = func
+            unjsonify_variant = unjsonify.specialize(variant_type)
+            cache[label] = unjsonify_variant
 
-        return func(DictWithoutKey(base=value, key=label_name))
+        # call the variant unjsonifier with the input value, but with
+        # the label removed
+        return unjsonify_variant(DictWithoutKey(base=value, key=label_name))
 
     return specialized
 
@@ -200,14 +181,15 @@ def unjsonify_self(value):
     return unjsonify[self_type](value)
 
 
+@dataclasses.dataclass
 class Unjsonify:
-    def __init__(self):
-        self._cache = {}
-        self._lock = threading.RLock()
-        self._context_stack = set()
-        self._delay = 0
+    def __init__(self) -> None:
+        self._cache: dict[type, Callable] = {}
+        self._lock: threading.RLock = threading.RLock()
+        self._context_stack: set[type] = set()
+        self._delay: int = 0
 
-    def specialize(self, type_):
+    def specialize(self, type_) -> Callable:
         if isinstance(type_, NewType):
             type_ = type_.__supertype__
 
@@ -238,7 +220,7 @@ class Unjsonify:
         else:
             return self.specialize(type_)
 
-    def __getitem__(self, type_):
+    def __getitem__(self, type_) -> Callable:
         unjsonify = self._cache.get(type_)
         if unjsonify is not None:
             return unjsonify

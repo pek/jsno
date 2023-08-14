@@ -18,27 +18,29 @@ import decimal
 import enum
 import pathlib
 import re
+import uuid
 import zoneinfo
 
-from types import NoneType
+from types import NoneType, SimpleNamespace
+from typing import Any
 
-from jsno.jsonify import jsonify
+from jsno.jsonify import jsonify, JSON
 from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
 
 
 # marking types to be jsonified as strings
 
 
-def jsonify_to_string(value):
+def jsonify_to_string(value: Any) -> str:
     return str(value)
 
 
-def unjsonify_from_string(value, as_type):
+def unjsonify_from_string(value: JSON, as_type: type) -> Any:
     typecheck(value, str, as_type)
     return cast(value, as_type)
 
 
-def jsonify_as_string(type_, exceptions=()):
+def jsonify_as_string(type_: type, exceptions: type | tuple[type, ...] = ()) -> type:
     jsonify.register(type_)(jsonify_to_string)
 
     if exceptions:
@@ -156,6 +158,12 @@ def _(value, as_type):
 
 jsonify_as_string(pathlib.Path)
 
+
+# uuid.UUID
+
+jsonify_as_string(uuid.UUID)
+
+
 # complex numbers
 
 jsonify_as_string(complex)
@@ -196,3 +204,16 @@ def _(value):
 @unjsonify.register(re.Pattern)
 def _(value, as_type):
     return re.compile(value)
+
+
+# types.SimpleNamespace
+
+@jsonify.register(SimpleNamespace)
+def _(value):
+    return jsonify(value.__dict__)
+
+
+@unjsonify.register(SimpleNamespace)
+def _(value, as_type):
+    typecheck(value, dict, as_type)
+    return as_type(**value)

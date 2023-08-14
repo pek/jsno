@@ -1,8 +1,9 @@
 import dataclasses
 import functools
+import typing
 
 from jsno.extra_data import get_extra_data_configuration
-from jsno.property_name import resolve_field_name
+from jsno.property_name import get_property_name
 from jsno.variant import get_variantfamily
 
 
@@ -10,6 +11,12 @@ from jsno.variant import get_variantfamily
 valid JSON types.
 """
 JSON = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
+
+
+class FieldSpec(typing.NamedTuple):
+    name: str
+    json_name: str
+    optional: bool
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
@@ -23,7 +30,7 @@ class DataclassJsonification:
 
     extra_data_property: str | None
 
-    fields: list
+    fields: list[FieldSpec]
 
     def jsonify(self, value) -> dict[str, JSON]:
         result: dict[str, JSON] = {}
@@ -34,10 +41,10 @@ class DataclassJsonification:
             result[self.label_name] = self.label
 
         # add regular fields
-        for (field_name, json_name, optional) in self.fields:
-            val = getattr(value, field_name)
-            if not (val is None and optional):
-                result[json_name] = jsonify(val)
+        for field in self.fields:
+            val = getattr(value, field.name)
+            if not (val is None and field.optional):
+                result[field.json_name] = jsonify(val)
 
         # if extra data is defined, add it's contents
         if self.extra_data_property:
@@ -57,10 +64,10 @@ class DataclassJsonification:
             label=family and family.get_label(type_),
             extra_data_property=extra_data_property,
             fields=[
-                (field.name, json_name, field.default is None)
+                FieldSpec(field.name, json_name, field.default is None)
                 for field in dataclasses.fields(type_)
                 if field.name != extra_data_property
-                if (json_name := resolve_field_name(field))
+                if (json_name := get_property_name(field.type, field.name))
             ]
         )
 
@@ -171,7 +178,7 @@ def generic_jsonify(value):
     raise TypeError("Don't know how to jsonify", value, type(value))
 
 
-native_types = (str, int, float, bool, type(None))
+native_types = {str, int, float, bool, type(None)}
 
 
 def call_jsonify(value) -> JSON:

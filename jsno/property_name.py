@@ -1,22 +1,33 @@
 from dataclasses import dataclass
-import typing
 
 from jsno.utils import Annotation
 
 
 @dataclass(frozen=True, slots=True)
 class PropertyName(Annotation):
+    """
+    Annotation type for marking a property (a dataclass field), to
+    be mapped to something other when converting to JSON.
+    """
+
     name: str
+    """The name to use in JSON"""
 
 
-def property_name(name):
+def property_name(name) -> PropertyName:
     return PropertyName(name)
 
 
-def resolve_field_name(field):
-    if typing.get_origin(field.type) is typing.Annotated:
-        for arg in typing.get_args(field.type):
-            if isinstance(arg, PropertyName):
-                return arg.name
+def get_property_name(type_: type, default: str) -> str:
+    """
+    Get the property name for a type.
 
-    return field.name
+    If there is a property_name annotation attched, use it's
+    name. Otherwise return the default.
+    """
+
+    annotation = PropertyName.get_annotation(type_)
+    if annotation:
+        return annotation.name
+    else:
+        return default

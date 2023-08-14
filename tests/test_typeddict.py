@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import TypedDict, NotRequired, Required, NamedTuple
+from typing import TypedDict, NotRequired, Required, NamedTuple, Optional
 
 import pytest
 
-from jsno import jsonify, unjsonify, UnjsonifyError
+from jsno import jsonify, unjsonify, UnjsonifyError, property_name, Constraint
 
 
 class ApiKey(TypedDict):
@@ -64,3 +64,39 @@ def test_unjsonify_namedtuple():
 def test_unjsonify_namedtuple_error():
     with pytest.raises(UnjsonifyError):
         unjsonify[LogEntry](["2023-08-05T08:32:10"])
+
+
+class AnnotatedLogEntry(TypedDict):
+    date: datetime
+    message: str // Constraint.len(min=2)
+
+
+def test_unjsonify_constrained():
+    json = {"date": "2023-08-13T19:21:00", "message": "fail"}
+    entry = AnnotatedLogEntry(date=datetime(2023, 8, 13, 19, 21, 0), message="fail")
+    assert unjsonify[AnnotatedLogEntry](json) == entry
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[LogEntry]({**json, "message": "!"})
+
+
+class LogEntryWithPropertyName(TypedDict):
+    date: datetime // property_name("log-date")  # noqa
+    message: str // Constraint.len(min=2)
+
+
+def test_unjsonify_property_name_error():
+
+    # with pytest.raises(TypeError):
+    unjsonify[LogEntryWithPropertyName]
+
+
+class LinkedList(TypedDict):
+    value: str
+    next: Optional["LinkedList"]
+
+
+def test_unjsonify_recursive_type():
+    json = {"value": "one", "next": {"value": "two", "next": None}}
+
+    assert unjsonify[LinkedList](json) == json

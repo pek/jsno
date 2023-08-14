@@ -40,6 +40,7 @@ from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
 from jsno.property_name import property_name
 from jsno.record import Record
+from jsno.schema import Schema
 from jsno.standard import jsonify_as_string
 from jsno.unjsonify import unjsonify, UnjsonifyError
 from jsno.variant import get_variantfamily, variantfamily, variantlabel, VariantFamily
@@ -50,7 +51,7 @@ import jsno.datetime  # noqa
 import jsno.tuple  # noqa
 
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 __all__ = [
     "dumps",
@@ -65,6 +66,7 @@ __all__ = [
     "variantfamily",
     "variantlabel",
     "Constraint",
+    "Schema",
     "Record",
     "UnjsonifyError",
     "VariantFamily",

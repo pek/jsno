@@ -77,3 +77,16 @@ class Annotation:
         type // Annotation(...)
         """
         return typing.Annotated[type_, self]
+
+    @classmethod
+    def get_annotation(cls, type_) -> typing.Self | None:
+        """
+        Get the (first) annotation of this calsss attached to a type, or
+        None if it doesn't have one.
+        """
+        if typing.get_origin(type_) is typing.Annotated:
+            for arg in typing.get_args(type_):
+                if isinstance(arg, cls):
+                    return arg
+
+        return None

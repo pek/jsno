@@ -159,6 +159,8 @@ _variant family_.
 * pathlib.Path
 * re.Pattern
 * zoneinfo.ZoneInfo
+* uuid.UUID
+* types.SimpleNamespace
 * Literal (only int and str literals)
 * NamedTuple
 * TypedDict
@@ -167,7 +169,7 @@ _variant family_.
 ## Dumps and loads
 
 Jsno provides shortcut functions _dumps_ and _loads_ with interface that is
-similar to the standard _json_ module function.s _jsno.dumps_ both jsonifies its argument
+similar to the standard _json_ module function. _jsno.dumps_ both jsonifies its argument
 and turns it into a JSON-encoded string, similar to standard _json.dumps_
 function. Correspondinly, _jsno.loads_ both decodes and unjsonify JSON data.
 
@@ -237,7 +239,7 @@ most appropriate behavior, for example when converting the request body of an AP
 request, it's best to let the caller know that they might have mistyped property
 names in their data. However, sometimes, it's best to just ignore the extra properties,
 for example when reading persistent data that could have obsolete properties in it
-that are not reflected by the dataclass definition.
+that are not reflected in the dataclass definition.
 
 The extra key behavior can be controlled by running the unjsonification inside
 the approproate _context_:
@@ -311,7 +313,7 @@ class LiteralValue:
 
 It could be necessary to map the field names of a dataclass to something other
 than the ones defined in the Python class. For example, the classes could be
-modeling an API that uses property names that are not compatible with Python's
+modeling a HTTP API that uses property names that are not compatible with Python's
 naming rules, like using _hyphenated-names_, or names that are reserved in Python,
 such as "class". The field name can be customized with an `property_name` annotation
 that can be attached to a type similar to a constraint:
@@ -489,7 +491,13 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
-### Version 1.1.2 (2023-08-08)
+### Version 1.1.3 (2023-08-14)
+
+* support for types.SimpleNamespace and uuid.UUID
+* orphan families for tagged variants without family
+* unjsonification schemas without a type
+
+### Version 1.1.2 (2023-08-09)
 
 * support for Self type
 * support for recursive and mutually recursive dataclasses

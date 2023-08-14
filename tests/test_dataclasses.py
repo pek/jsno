@@ -350,3 +350,16 @@ def test_unjsonify_mutually_recursive_dataclasses():
             ]
         )
     )
+
+
+class FunctionallyExtendedFoloder(Folder):
+    # this is not marked with @dataclass
+    pass
+
+
+def test_dataclass_inheritance():
+    json = {"name": "main", "subfolders": [{"name": "sub", "subfolders": []}]}
+    assert (
+        unjsonify[FunctionallyExtendedFoloder](json) ==
+        FunctionallyExtendedFoloder(name="main", subfolders=[FunctionallyExtendedFoloder(name="sub")])
+    )
