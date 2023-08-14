@@ -309,6 +309,19 @@ class LiteralValue:
     value: str // (LiteralInt | LiteralString)
 ```
 
+Constraints can be attached to classes as well:
+
+```py
+@dataclass
+@Constraint(lambda range: range.min <= range.max)
+class Range:
+    min: int
+    max: int
+```
+
+The constraint will be validated any time an instance of the class is unjsonified.
+
+
 ## Customizing field names
 
 It could be necessary to map the field names of a dataclass to something other
@@ -331,7 +344,6 @@ json = jsonify(request)
 assert json == {"class": "Request", "instance-count": 1}
 assert unjsonify[APIRequest](json) == request
 ```
-
 
 
 ## Anonymous record types
@@ -490,6 +502,10 @@ Jsno has no 3rd party dependencies.
 
 
 ## Release Notes
+
+### Version 1.1.4 (2023-08-14)
+
+* class constraints
 
 ### Version 1.1.3 (2023-08-14)
 

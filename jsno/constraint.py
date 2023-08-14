@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from jsno.unjsonify import validate_annotation
+from jsno.unjsonify import get_annotation_validator, get_class_annotations
 from jsno.utils import Annotation
 
 
@@ -36,7 +36,33 @@ class Constraint(Annotation):
         )
 
     def evaluate(self, value) -> bool:
+        """
+        To be implemented by the subclasses
+        """
         raise NotImplementedError()  # pragma: no cover
+
+    def __call__(self, class_: type) -> type:
+        """
+        Using the constraint as a decorator to a dataclass
+        """
+        print("TTT", class_, type(class_))
+        existing_constraints = get_class_annotations(class_)
+        existing_constraints.append(self)
+        return class_
+
+    def validate(self, value):
+        if not self.evaluate(value):
+            if self.name:
+                message = f"Violates constraint: {self.name}"
+            else:
+                message = "Violates a constraint"
+
+            raise ValueError(message)
+
+
+@get_annotation_validator.register(Constraint)
+def _(constraint):
+    return constraint.validate
 
 
 @dataclass(slots=True, frozen=True)
@@ -104,12 +130,4 @@ class FunctionConstraint(Constraint):
         return self.function(value)
 
 
-@validate_annotation.register(Constraint)
-def _(constraint, value):
-    if not constraint.evaluate(value):
-        if constraint.name:
-            message = f"Violates constraint: {constraint.name}"
-        else:
-            message = "Violates a constraint"
-
-        raise ValueError(message)
+constraint = Constraint

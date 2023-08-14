@@ -3,7 +3,7 @@ from typing import Annotated
 
 import pytest
 
-from jsno import unjsonify, Constraint, UnjsonifyError
+from jsno import unjsonify, Constraint, UnjsonifyError, constraint
 
 
 def test_function_constraint():
@@ -116,3 +116,17 @@ class LiteralValues:
 def test_embedded_constraint():
     with pytest.raises(UnjsonifyError):
         unjsonify[list[LiteralValues]]([{"values": ["foo"]}])
+
+
+@dataclass
+@constraint(lambda it: it.min <= it.max)
+class Range:
+    min: int
+    max: int
+
+
+def test_dataclass_constraint():
+    assert unjsonify[Range]({"min": 0, "max": 99}) == Range(min=0, max=99)
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[Range]({"min": 99, "max": 0})

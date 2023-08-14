@@ -33,7 +33,7 @@ unjsonify class method.
 
 """
 
-from jsno.constraint import Constraint
+from jsno.constraint import Constraint, constraint
 from jsno.extra_data import extra_data
 from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
@@ -51,9 +51,10 @@ import jsno.datetime  # noqa
 import jsno.tuple  # noqa
 
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 
 __all__ = [
+    "constraint",
     "dumps",
     "jsonify",
     "jsonify_as_string",
