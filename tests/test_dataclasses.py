@@ -299,7 +299,7 @@ def test_unjsonify_self_referential_dataclass():
 
 def test_unjsonify_self_without_context_error():
     with pytest.raises(TypeError):
-        print(unjsonify[Self]({}))
+        unjsonify[Self]({})
 
 
 @dataclasses.dataclass

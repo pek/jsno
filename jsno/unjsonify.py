@@ -14,6 +14,8 @@ from typing import (
 from jsno.fields_unjsonifier import (
     UnjsonifyError, SchemaField, create_unjsonifier, typecheck, raise_error, unjsonify_context
 )
+from jsno.constraint import get_validators, get_class_annotations
+
 from jsno.property_name import get_property_name
 from jsno.utils import DictWithoutKey
 from jsno.variant import get_variantfamily
@@ -181,13 +183,24 @@ def unjsonify_self(value):
     return unjsonify[self_type](value)
 
 
-@functools.cache
-def get_class_annotations(class_):
-    return [
-        constraint
-        for base in class_.__bases__
-        for constraint in get_class_annotations(base)
-    ]
+def get_validating_unjsonify(as_type, unjsonify, validators):
+    if not validators:
+        return unjsonify
+
+    def specialized(value):
+        result = unjsonify(value)
+        for validate in validators:
+            try:
+                validate(result)
+                continue
+            except ValueError as exc:
+                detail = exc.args[0]
+
+            raise UnjsonifyError(f"Validation failed for {as_type}", detail)
+
+        return result
+
+    return specialized
 
 
 @dataclasses.dataclass
@@ -225,7 +238,7 @@ class Unjsonify:
 
         if isinstance(type_, type):
             validators = get_validators(get_class_annotations(type_))
-            return validating_unjsonify(type_, unjsonify_, validators)
+            return get_validating_unjsonify(type_, unjsonify_, validators)
 
         return unjsonify_
 
@@ -315,42 +328,9 @@ def _(value, as_type):
     return value
 
 
-@functools.singledispatch
-def get_annotation_validator(annotation):
-    return None
-
-
-def get_validators(annotations):
-    return [
-        validator
-        for annotation in annotations
-        if (validator := get_annotation_validator(annotation))
-    ]
-
-
-def validating_unjsonify(as_type, unjsonify, validators):
-    if not validators:
-        return unjsonify
-
-    def specialized(value):
-        result = unjsonify(value)
-        for validate in validators:
-            try:
-                validate(result)
-                continue
-            except ValueError as exc:
-                detail = exc.args[0]
-
-            raise UnjsonifyError(f"Validation failed for {as_type}", detail)
-
-        return result
-
-    return specialized
-
-
 @unjsonify.register_factory(Annotated)
 def _(as_type):
     args = get_args(as_type)
     type_ = args[0]
 
-    return validating_unjsonify(type_, unjsonify[type_], get_validators(args[1:]))
+    return get_validating_unjsonify(type_, unjsonify[type_], get_validators(args[1:]))

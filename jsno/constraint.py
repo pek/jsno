@@ -1,10 +1,42 @@
+import functools
 import re
 
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from jsno.unjsonify import get_annotation_validator, get_class_annotations
 from jsno.utils import Annotation
+
+
+@functools.cache
+def get_class_annotations(class_) -> list[Annotation]:
+    """
+    Collect the class contraints of the base classes for a
+    class into a mutable list. New constraints can be
+    appended to the list, and will be there when this is
+    called next time
+    """
+    return [
+        annotation
+        for base in class_.__bases__
+        for annotation in get_class_annotations(base)
+    ]
+
+
+@functools.singledispatch
+def get_annotation_validator(annotation):
+    """
+    Extendable type-indexed function that creates a validator
+    function out of an annotation, if that's applicable.
+    """
+    return None
+
+
+def get_validators(annotations):
+    return [
+        validator
+        for annotation in annotations
+        if (validator := get_annotation_validator(annotation))
+    ]
 
 
 class Constraint(Annotation):
@@ -45,9 +77,8 @@ class Constraint(Annotation):
         """
         Using the constraint as a decorator to a dataclass
         """
-        print("TTT", class_, type(class_))
-        existing_constraints = get_class_annotations(class_)
-        existing_constraints.append(self)
+        annotations = get_class_annotations(class_)
+        annotations.append(self)
         return class_
 
     def validate(self, value):
@@ -80,6 +111,11 @@ class OrConstraint(Constraint):
 
 @dataclass(slots=True, frozen=True)
 class RangeConstraint(Constraint):
+    """
+    Constraint for a value to be in the closed range [min..max].
+    Either of the bounds may be omitted.
+    """
+
     value_name = "Value"
 
     min: Any | None = None
@@ -102,6 +138,11 @@ class RangeConstraint(Constraint):
 
 
 class LenConstraint(RangeConstraint):
+    """
+    Constraint for the length of a value to be in the closed range
+    [min..max]. Either of the bounds may be omitted.
+    """
+
     value_name = "Length"
 
     def evaluate(self, value) -> bool:
@@ -110,6 +151,11 @@ class LenConstraint(RangeConstraint):
 
 @dataclass(slots=True, frozen=True)
 class RegExConstraint(Constraint):
+    """
+    Constraint on a string type, matching it with a regular expression.
+    The regular expression must match the _whole_ value.
+    """
+
     name: str
     regex: re.Pattern
 
@@ -123,6 +169,10 @@ Constraint.len = LenConstraint  # type: ignore
 
 @dataclass(slots=True, frozen=True)
 class FunctionConstraint(Constraint):
+    """
+    Constraint that is evaluated by calling the provided boolean-valued
+    function on the value.
+    """
     function: Callable[[Any], bool]
     name: str | None = None
 
