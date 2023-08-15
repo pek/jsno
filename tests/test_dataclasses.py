@@ -363,3 +363,19 @@ def test_dataclass_inheritance():
         unjsonify[FunctionallyExtendedFoloder](json) ==
         FunctionallyExtendedFoloder(name="main", subfolders=[FunctionallyExtendedFoloder(name="sub")])
     )
+
+
+@dataclasses.dataclass
+class KeywordsOnlyClass:
+    _: dataclasses.KW_ONLY
+    name: str
+    age: float
+
+
+def test_dataclass_with_keyword_args_only():
+    instance = KeywordsOnlyClass(name="ABC", age=123)
+    json = {"name": "ABC", "age": 123}
+    assert(jsonify(instance) == json)
+    assert unjsonify[KeywordsOnlyClass](json) == instance
+
+

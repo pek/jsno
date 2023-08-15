@@ -96,8 +96,17 @@ def get_unjsonify_for_field(field_type, self_type):
     return wrapped
 
 
-def resolve_field_unjsonifiers(as_type, required_keys=frozenset()):
+def resolve_field_unjsonifiers(as_type, field_names=None, required_keys=frozenset()):
     type_hints = get_type_hints(as_type, include_extras=True)
+
+    if field_names is None:
+        field_types = type_hints.items()
+    else:
+        field_types = [
+            (name, type_)
+            for name in field_names
+            if (type_ := type_hints.get(name))
+        ]
 
     unjsonify._context_stack.add(as_type)
     try:
@@ -108,7 +117,7 @@ def resolve_field_unjsonifiers(as_type, required_keys=frozenset()):
                 default=Required if name in required_keys else NotRequired,
                 unjsonify=get_unjsonify_for_field(type_, as_type)
             )
-            for (name, type_) in type_hints.items()
+            for (name, type_) in field_types
             if (json_name := get_property_name(type_, name))
         ]
     finally:
@@ -121,7 +130,10 @@ def get_unjsonify_dataclass(as_type):
 
     unjsonifier = create_unjsonifier(
         as_type=as_type,
-        fields=resolve_field_unjsonifiers(as_type),
+        fields=resolve_field_unjsonifiers(
+            as_type,
+            field_names=[field.name for field in dataclasses.fields(as_type)]
+        )
     )
 
     def specialized(value):
