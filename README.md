@@ -503,6 +503,11 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### Version 1.1.6 (2023-08-14)
+
+* ignore non-field members of dataclasses when unjsonifying
+* better error messages
+
 ### Version 1.1.5 (2023-08-14)
 
 * removes a single debug print
