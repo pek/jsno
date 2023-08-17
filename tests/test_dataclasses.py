@@ -377,5 +377,3 @@ def test_dataclass_with_keyword_args_only():
     json = {"name": "ABC", "age": 123}
     assert(jsonify(instance) == json)
     assert unjsonify[KeywordsOnlyClass](json) == instance
-
-

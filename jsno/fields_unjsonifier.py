@@ -9,8 +9,25 @@ from jsno.extra_data import get_extra_data_configuration, IgnoreExtraData
 from jsno.utils import contextvar
 
 
+def get_typename(type_):
+    return (
+        getattr(type_, "__qualname__", None) or
+        getattr(type_, "__name__", None) or
+        str(type_)
+    )
+
+
 class UnjsonifyError(TypeError):
-    pass
+    def __init__(self, value, type, detail=None, message=None):
+        if message is None:
+            message = f"Cannot unjsonify as {get_typename(type)}: {repr(value)}"
+            if detail is not None:
+                message = f"{message}: {detail}"
+
+        super().__init__(message)
+        self.value = value
+        self.type = type
+        self.detail = detail
 
 
 unjsonify_context = contextvar(on_extra_key="error", self_type=None)
@@ -18,7 +35,7 @@ unjsonify_context = contextvar(on_extra_key="error", self_type=None)
 
 
 def raise_error(value: Any, as_type: Any, detail=None):
-    raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value, detail)
+    raise UnjsonifyError(type=as_type, value=value, detail=detail)
 
 
 def typecheck(value: Any, jsontype: type | tuple[type, ...], as_type: Any) -> None:
@@ -83,7 +100,9 @@ class FieldsUnjsonifier:
                 result[field.name] = field.unjsonify(json_value)
                 found_count += 1
             elif field.default is Required:
-                raise UnjsonifyError(f"Required key not found: {field.json_name}")
+                detail = f"Required key not found: {repr(field.json_name)}"
+                raise UnjsonifyError(value, self.as_type, detail)
+
             elif field.default is NotRequired:
                 pass
             else:
@@ -100,12 +119,13 @@ class FieldsUnjsonifier:
 
         extra_keys = {key for key in value if key not in result}
         if self.as_type:
-            type_name = getattr(self.as_type, "__qualname__", None) or self.as_type.__name__
+            type_name = get_typename(self.as_type)
             for_message = f" for {type_name}: {', '.join(extra_keys)}"
         else:
             for_message = ""
 
-        raise UnjsonifyError(f"Extra keys{for_message}: {', '.join(extra_keys)}")
+        detail = f"Extra keys{for_message}: {', '.join(map(repr, extra_keys))}"
+        raise UnjsonifyError(value, self.as_type, detail)
 
     def __call__(self, value):
         return self.unjsonify_fields(value)

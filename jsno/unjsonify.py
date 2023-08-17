@@ -208,7 +208,7 @@ def get_validating_unjsonify(as_type, unjsonify, validators):
             except ValueError as exc:
                 detail = exc.args[0]
 
-            raise UnjsonifyError(f"Validation failed for {as_type}", detail)
+            raise UnjsonifyError(value, as_type, detail)
 
         return result
 
@@ -244,7 +244,7 @@ class Unjsonify:
         try:
             factory = unjsonify_factory.dispatch(origin or type_)
         except TypeError:
-            raise UnjsonifyError(f"Cannot unjsonify as {repr(type_)} of type {type(type_)}")
+            raise TypeError(f"Cannot unjsonify as {repr(type_)} of type {type(type_)}")
 
         unjsonify_ = factory(type_)
 
@@ -329,7 +329,7 @@ def get_unjsonify_union(as_type):
                 # try next option
                 continue
 
-        raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value)
+        raise UnjsonifyError(value, as_type)
 
     return specialized
 
