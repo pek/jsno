@@ -322,11 +322,15 @@ def get_unjsonify_union(as_type):
     Unjsonify a Union type. Tries each option at a time, and
     selects the first one that matches.
     """
+    args = get_args(as_type)
+    if types.NoneType in args:
+        # special case for Optional type
+        args = tuple(arg for arg in args if arg is not types.NoneType)  # noqa
+        unjsonify_type = unjsonify[Union[args]]
 
-    options = [
-        unjsonify[type_option]
-        for type_option in get_args(as_type)
-    ]
+        return lambda value: None if value is None else unjsonify_type(value)
+
+    options = [unjsonify[type_option] for type_option in get_args(as_type)]
 
     def specialized(value):
         for try_option in options:
