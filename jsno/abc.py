@@ -9,7 +9,7 @@ from collections.abc import ByteString, Mapping, Sequence, Set
 
 from jsno.jsonify import jsonify
 from jsno.typeddict import unjsonify_typeddict_factory
-from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
+from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError, cast
 
 
 # Mapping
@@ -53,7 +53,7 @@ def _(as_type):
     # monotyped case: convert from dict
     def unjonify_untyped_mapping(value):
         if not isinstance(value, (dict, Mapping)):
-            raise_error(value, as_type)
+            raise UnjsonifyError(value, as_type)
 
         return cast(value, as_type)
 
@@ -128,4 +128,4 @@ def _(value, as_type):
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)

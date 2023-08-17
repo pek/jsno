@@ -25,7 +25,7 @@ from types import NoneType, SimpleNamespace
 from typing import Any
 
 from jsno.jsonify import jsonify, JSON
-from jsno.unjsonify import unjsonify, typecheck, raise_error, cast
+from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError, cast
 
 
 # marking types to be jsonified as strings
@@ -56,7 +56,7 @@ def jsonify_as_string(type_: type, exceptions: type | tuple[type, ...] = ()) -> 
 
                 detail = exc.args[0]
 
-            raise_error(value, as_type, detail)
+            raise UnjsonifyError(value, as_type, detail)
 
     else:
         unjsonify.register(type_)(unjsonify_from_string)
@@ -129,7 +129,7 @@ def _(value, as_type):
     except AttributeError:
         pass
 
-    raise_error(value, as_type)
+    raise UnjsonifyError(value, as_type)
 
 
 # zoneinfo
@@ -188,7 +188,7 @@ class Range:
 def _(value, as_type):
     it = unjsonify[Range](value)
     if it.step == 0:
-        raise_error(value, as_type, "Range step must not be zero")
+        raise UnjsonifyError(value, as_type, "Range step must not be zero")
 
     return as_type(it.start, it.stop, it.step or 1)
 

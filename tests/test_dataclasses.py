@@ -391,6 +391,4 @@ def test_error_reporting():
             }
         ]
     }
-    # unjsonify[Person](json)
-
-
+    unjsonify[Person](json)

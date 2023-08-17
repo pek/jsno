@@ -23,7 +23,7 @@ class UnjsonifyError(TypeError):
         if message is None:
             try:
                 jsonvalue = json.dumps(value)
-            except:
+            except Exception:
                 jsonvalue = repr(value)
 
             message = f"Cannot unjsonify as {get_typename(type)}: {jsonvalue}"

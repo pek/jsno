@@ -13,7 +13,7 @@ import datetime
 
 from jsno.jsonify import jsonify
 from jsno.standard import jsonify_to_string
-from jsno.unjsonify import unjsonify, typecheck, raise_error
+from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError
 
 
 # datetime.date
@@ -33,7 +33,7 @@ def _(value, as_type):
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)
 
 
 # datetime.time
@@ -53,7 +53,7 @@ def _(value, as_type):
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)
 
 
 # datetime.datetime
@@ -88,7 +88,7 @@ def _(value, as_type):
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)
 
 
 # datetime.timedelta
@@ -130,7 +130,7 @@ def _(value, as_type):
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)
 
 
 # datetime.timezone
@@ -159,4 +159,4 @@ def _(value, as_type):
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)

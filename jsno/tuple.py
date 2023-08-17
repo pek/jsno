@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from typing import Callable
 
 from jsno.abc import unjsonify_sequence_factory
-from jsno.unjsonify import unjsonify, typecheck, raise_error
+from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError
 
 
 def unjsonify_typed_factory(as_type: type) -> Callable:
@@ -22,7 +22,7 @@ def unjsonify_typed_factory(as_type: type) -> Callable:
 
     def specialized(value):
         if len(value) != len(arg_types):
-            raise_error(value, as_type)
+            raise UnjsonifyError(value, as_type)
 
         return as_type(
             unjsonify_(item)
@@ -55,7 +55,7 @@ def _(as_type):
             typecheck(value, (list, Sequence), as_type)
 
             if len(annotations) != len(value):
-                raise_error(value, as_type)
+                raise UnjsonifyError(value, as_type)
 
             return as_type(*(
                 unjsonify[type_](val)

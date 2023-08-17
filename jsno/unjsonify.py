@@ -12,7 +12,7 @@ from typing import (
 )
 
 from jsno.fields_unjsonifier import (
-    UnjsonifyError, SchemaField, create_unjsonifier, typecheck, raise_error, unjsonify_context
+    UnjsonifyError, SchemaField, create_unjsonifier, typecheck, unjsonify_context
 )
 from jsno.constraint import get_validators, get_class_annotations
 
@@ -40,7 +40,7 @@ def cast(value: Any, as_type: Any) -> Any:
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)
 
 
 @functools.singledispatch
@@ -143,7 +143,7 @@ def get_unjsonify_dataclass(as_type):
         except TypeError as exc:
             detail = exc.args[0]
 
-        raise_error(value, as_type, detail)
+        raise UnjsonifyError(value, as_type, detail)
 
     return specialized
 
@@ -164,13 +164,13 @@ def get_unjsonify_variant(as_type, family) -> Callable:
         # get the label property from the value
         label = value.get(label_name)
         if not isinstance(label, str):
-            raise_error(value, as_type, f"missing {label}")
+            raise UnjsonifyError(value, as_type, f"missing {label}")
 
         unjsonify_variant = cache.get(label)
         if unjsonify_variant is None:
             variant_type = family.get_variant(label)
             if variant_type is None or not issubclass(variant_type, as_type):
-                raise_error(value, as_type, f"unknown {label_name} label: {label}")
+                raise UnjsonifyError(value, as_type, f"unknown {label_name} label: {label}")
 
             unjsonify_variant = unjsonify.specialize(variant_type)
             cache[label] = unjsonify_variant
@@ -185,7 +185,13 @@ def get_unjsonify_variant(as_type, family) -> Callable:
 def get_unjsonify_literal(as_type):
     options = get_args(as_type)
 
-    return lambda value: value if value in options else raise_error(value, as_type)
+    def specialized(value):
+        if value in options:
+            return value
+
+        raise UnjsonifyError(value, as_type)
+
+    return specialized
 
 
 def unjsonify_self(value):
@@ -277,6 +283,7 @@ class Unjsonify:
             if not isinstance(unjsonify, ReferThrough):
 
                 if self._delay:
+                    # only for concurrency testing
                     time.sleep(self._delay)
 
                 self._cache[type_] = unjsonify
