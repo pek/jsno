@@ -377,3 +377,20 @@ def test_dataclass_with_keyword_args_only():
     json = {"name": "ABC", "age": 123}
     assert(jsonify(instance) == json)
     assert unjsonify[KeywordsOnlyClass](json) == instance
+
+
+def test_error_reporting():
+    json = {
+        "name": "X",
+        "friends": [
+            {
+                "person": {"name": "Y", "friends": [
+                    {"name": "frend"}
+                ]},
+                "nickname": "nick"
+            }
+        ]
+    }
+    # unjsonify[Person](json)
+
+

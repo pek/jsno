@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import functools
+import json
 
 from collections.abc import Mapping
 from typing import Any, Callable, Required, NotRequired
@@ -20,7 +21,12 @@ def get_typename(type_):
 class UnjsonifyError(TypeError):
     def __init__(self, value, type, detail=None, message=None):
         if message is None:
-            message = f"Cannot unjsonify as {get_typename(type)}: {repr(value)}"
+            try:
+                jsonvalue = json.dumps(value)
+            except:
+                jsonvalue = repr(value)
+
+            message = f"Cannot unjsonify as {get_typename(type)}: {jsonvalue}"
             if detail is not None:
                 message = f"{message}: {detail}"
 
@@ -118,13 +124,7 @@ class FieldsUnjsonifier:
             return
 
         extra_keys = {key for key in value if key not in result}
-        if self.as_type:
-            type_name = get_typename(self.as_type)
-            for_message = f" for {type_name}: {', '.join(extra_keys)}"
-        else:
-            for_message = ""
-
-        detail = f"Extra keys{for_message}: {', '.join(map(repr, extra_keys))}"
+        detail = f"Extra keys: {', '.join(map(repr, extra_keys))}"
         raise UnjsonifyError(value, self.as_type, detail)
 
     def __call__(self, value):
