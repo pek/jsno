@@ -12,7 +12,7 @@ from typing import (
 )
 
 from jsno.fields_unjsonifier import (
-    UnjsonifyError, SchemaField, create_unjsonifier, typecheck, raise_error, unjsonify_context
+    UnjsonifyError, SchemaField, create_unjsonifier, typecheck, unjsonify_context
 )
 from jsno.constraint import get_validators, get_class_annotations
 
@@ -40,7 +40,7 @@ def cast(value: Any, as_type: Any) -> Any:
     except ValueError as exc:
         detail = exc.args[0]
 
-    raise_error(value, as_type, detail)
+    raise UnjsonifyError(value, as_type, detail)
 
 
 @functools.singledispatch
@@ -96,8 +96,17 @@ def get_unjsonify_for_field(field_type, self_type):
     return wrapped
 
 
-def resolve_field_unjsonifiers(as_type, required_keys=frozenset()):
+def resolve_field_unjsonifiers(as_type, field_names=None, required_keys=frozenset()):
     type_hints = get_type_hints(as_type, include_extras=True)
+
+    if field_names is None:
+        field_types = type_hints.items()
+    else:
+        field_types = [
+            (name, type_)
+            for name in field_names
+            if (type_ := type_hints.get(name))
+        ]
 
     unjsonify._context_stack.add(as_type)
     try:
@@ -108,7 +117,7 @@ def resolve_field_unjsonifiers(as_type, required_keys=frozenset()):
                 default=Required if name in required_keys else NotRequired,
                 unjsonify=get_unjsonify_for_field(type_, as_type)
             )
-            for (name, type_) in type_hints.items()
+            for (name, type_) in field_types
             if (json_name := get_property_name(type_, name))
         ]
     finally:
@@ -121,7 +130,10 @@ def get_unjsonify_dataclass(as_type):
 
     unjsonifier = create_unjsonifier(
         as_type=as_type,
-        fields=resolve_field_unjsonifiers(as_type),
+        fields=resolve_field_unjsonifiers(
+            as_type,
+            field_names=[field.name for field in dataclasses.fields(as_type)]
+        )
     )
 
     def specialized(value):
@@ -131,7 +143,7 @@ def get_unjsonify_dataclass(as_type):
         except TypeError as exc:
             detail = exc.args[0]
 
-        raise_error(value, as_type, detail)
+        raise UnjsonifyError(value, as_type, detail)
 
     return specialized
 
@@ -142,7 +154,7 @@ def get_unjsonify_variant(as_type, family) -> Callable:
     """
 
     # mapping from labels to corresponding unjsonifiers
-    cache: dict[str, Callable] = {}
+    cache: dict[str, tuple[Callable, bool]] = {}
 
     label_name = family.label_name
 
@@ -152,20 +164,28 @@ def get_unjsonify_variant(as_type, family) -> Callable:
         # get the label property from the value
         label = value.get(label_name)
         if not isinstance(label, str):
-            raise_error(value, as_type, f"missing {label}")
+            raise UnjsonifyError(value, as_type, f"missing {label}")
 
-        unjsonify_variant = cache.get(label)
-        if unjsonify_variant is None:
+        entry = cache.get(label)
+        if entry is None:
             variant_type = family.get_variant(label)
-            if variant_type is None or not issubclass(variant_type, as_type):
-                raise_error(value, as_type, f"unknown {label_name} label: {label}")
+            if variant_type is None:
+                raise UnjsonifyError(value, as_type, f"unknown {label_name}: {label}")
+            if not issubclass(variant_type, as_type):
+                raise UnjsonifyError(value, as_type, f"not subclass of {as_type}: {label}")
 
+            include_label = family.includes_label(variant_type)
             unjsonify_variant = unjsonify.specialize(variant_type)
-            cache[label] = unjsonify_variant
+            cache[label] = (unjsonify_variant, include_label)
+        else:
+            (unjsonify_variant, include_label) = entry
+
+        if not include_label:
+            value = DictWithoutKey(base=value, key=label_name)
 
         # call the variant unjsonifier with the input value, but with
         # the label removed
-        return unjsonify_variant(DictWithoutKey(base=value, key=label_name))
+        return unjsonify_variant(value)
 
     return specialized
 
@@ -173,7 +193,13 @@ def get_unjsonify_variant(as_type, family) -> Callable:
 def get_unjsonify_literal(as_type):
     options = get_args(as_type)
 
-    return lambda value: value if value in options else raise_error(value, as_type)
+    def specialized(value):
+        if value in options:
+            return value
+
+        raise UnjsonifyError(value, as_type)
+
+    return specialized
 
 
 def unjsonify_self(value):
@@ -196,7 +222,7 @@ def get_validating_unjsonify(as_type, unjsonify, validators):
             except ValueError as exc:
                 detail = exc.args[0]
 
-            raise UnjsonifyError(f"Validation failed for {as_type}", detail)
+            raise UnjsonifyError(value, as_type, detail)
 
         return result
 
@@ -232,7 +258,7 @@ class Unjsonify:
         try:
             factory = unjsonify_factory.dispatch(origin or type_)
         except TypeError:
-            raise UnjsonifyError(f"Cannot unjsonify as {repr(type_)} of type {type(type_)}")
+            raise TypeError(f"Cannot unjsonify as {repr(type_)} of type {type(type_)}")
 
         unjsonify_ = factory(type_)
 
@@ -265,6 +291,7 @@ class Unjsonify:
             if not isinstance(unjsonify, ReferThrough):
 
                 if self._delay:
+                    # only for concurrency testing
                     time.sleep(self._delay)
 
                 self._cache[type_] = unjsonify
@@ -303,11 +330,15 @@ def get_unjsonify_union(as_type):
     Unjsonify a Union type. Tries each option at a time, and
     selects the first one that matches.
     """
+    args = get_args(as_type)
+    if types.NoneType in args:
+        # special case for Optional type
+        args = tuple(arg for arg in args if arg is not types.NoneType)  # noqa
+        unjsonify_type = unjsonify[Union[args]]
 
-    options = [
-        unjsonify[type_option]
-        for type_option in get_args(as_type)
-    ]
+        return lambda value: None if value is None else unjsonify_type(value)
+
+    options = [unjsonify[type_option] for type_option in get_args(as_type)]
 
     def specialized(value):
         for try_option in options:
@@ -317,7 +348,7 @@ def get_unjsonify_union(as_type):
                 # try next option
                 continue
 
-        raise UnjsonifyError(f"Cannot unjsonify as {as_type}", value)
+        raise UnjsonifyError(value, as_type)
 
     return specialized
 

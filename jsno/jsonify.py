@@ -1,6 +1,7 @@
 import dataclasses
 import functools
-import typing
+
+from typing import NamedTuple, Sequence, Mapping
 
 from jsno.extra_data import get_extra_data_configuration
 from jsno.property_name import get_property_name
@@ -10,10 +11,10 @@ from jsno.variant import get_variantfamily
 """
 valid JSON types.
 """
-JSON = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
+JSON = bool | int | float | str | Sequence["JSON"] | Mapping[str, "JSON"] | None
 
 
-class FieldSpec(typing.NamedTuple):
+class FieldSpec(NamedTuple):
     name: str
     json_name: str
     optional: bool
@@ -59,9 +60,14 @@ class DataclassJsonification:
         family = get_variantfamily(type_)
         extra_data_property = get_extra_data_configuration(type_)
 
+        if family and not family.includes_label(type_):
+            label = family.get_labels(type_)[0]
+        else:
+            label = None
+
         return DataclassJsonification(
             label_name=family and family.label_name,
-            label=family and family.get_label(type_),
+            label=label,
             extra_data_property=extra_data_property,
             fields=[
                 FieldSpec(field.name, json_name, field.default is None)

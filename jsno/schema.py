@@ -3,8 +3,10 @@ Constructing unjsonifiers that unjsonify dictionaries.
 """
 
 import dataclasses
-from typing import NotRequired, Required, get_origin
+import inspect
+from typing import Any, NotRequired, Required, get_origin
 
+from jsno.extra_data import IgnoreExtraKeys
 from jsno.property_name import get_property_name
 from jsno.unjsonify import unjsonify, get_unjsonify_for_field
 from jsno.fields_unjsonifier import ExtraKeysUnjsonifier, SchemaField
@@ -13,9 +15,18 @@ from jsno.fields_unjsonifier import ExtraKeysUnjsonifier, SchemaField
 @dataclasses.dataclass
 class Schema:
     schema: dict
+    """ The schema, mapping property names to types and default values """
+
     total: bool = True
+    """ If total is true, the properties are required by default. """
+
     default_type: type | None = None
+    """ Default type to use for extra properties """
+
     extra_data_key: str | None = None
+    """ Extra data key that tells where to put the extra keys """
+
+    ignore_extra_keys: bool = False
 
     def _resolve_default(self, type_, default):
         """
@@ -62,11 +73,16 @@ class Schema:
             for (key, arg) in self.schema.items()
         ]
 
+        if self.ignore_extra_keys:
+            extra_data_key = IgnoreExtraKeys.instance
+        else:
+            extra_data_key = self.extra_data_key
+
         self._unjsonifier = ExtraKeysUnjsonifier.create(
             as_type=None,
             fields=fields,
             default_unjsonifier=self.default_type and unjsonify[self.default_type],
-            extra_data_key=self.extra_data_key,
+            extra_data_key=extra_data_key,
         )
 
     def unjsonify(self, value):
@@ -90,3 +106,44 @@ class Schema:
             kwargs['schema'] = schema
 
         return dataclasses.replace(self, **kwargs)
+
+    @staticmethod
+    def from_arguments(function, keywords_only=False, **kwargs):
+        """
+        Derive a schema from a function's signature.
+
+        If keyeords_only is True, only the keyword-only arguments
+        are included.
+        """
+
+        argspec = inspect.getfullargspec(inspect.unwrap(function))
+        return Schema.from_argspec(argspec, keywords_only=keywords_only, **kwargs)
+
+    @staticmethod
+    def from_argspec(argspec, keywords_only=False, **kwargs):
+        """
+        Derive schema from a FullArgSpec object.
+        """
+
+        defaults = argspec.kwonlydefaults or {}
+        argnames = argspec.kwonlyargs
+
+        if not keywords_only:
+            argdefaults = argspec.defaults or ()
+            nodefault_arg_count = len(argspec.args) - len(argdefaults)
+            args_with_defaults = argspec.args[nodefault_arg_count:]
+
+            defaults.update(zip(args_with_defaults, argdefaults))
+            argnames.extend(argspec.args)
+
+        def get_spec(argname):
+            type_ = argspec.annotations.get(argname, Any)
+            if defaults and argname in defaults:
+                return (type_, defaults[argname])
+            else:
+                return type_
+
+        return Schema(
+            schema={argname: get_spec(argname) for argname in argnames},
+            **kwargs
+        )

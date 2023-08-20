@@ -503,6 +503,20 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### Version 1.2.0 (2023-08-20)
+
+* ignore non-field members of dataclasses when unjsonifying
+* better error messages
+* special handling for optionals
+* multi-label variants
+* optional inclusion of variant labels in json output
+* JSON type alias
+* deriving unjsonification schema from function signature
+
+### Version 1.1.5 (2023-08-14)
+
+* removes a single debug print
+
 ### Version 1.1.4 (2023-08-14)
 
 * class constraints

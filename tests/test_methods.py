@@ -76,7 +76,7 @@ def _(value, as_type):
     """
 
     if value.get("renamed") is not True:
-        raise UnjsonifyError()
+        raise UnjsonifyError(value, as_type)
 
     return NamedList.unjsonify.__func__(as_type, value)
 

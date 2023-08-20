@@ -121,3 +121,38 @@ def test_schema_non_required_property():
             "extra-info": None,
         }
     )
+
+
+def test_from_arguments():
+
+    def testfunc(x, foo: str = "FOO", *, dt: date):
+        return f"{foo}: {dt.year} [{x}]"
+
+    schema = Schema.from_arguments(testfunc)
+
+    assert (
+        testfunc(**schema.unjsonify({"foo": "OOF", "dt": "2023-08-20", "x": 0})) ==
+        "OOF: 2023 [0]"
+    )
+
+    assert (
+        testfunc(**schema.unjsonify({"dt": "2023-08-20", "x": 0})) ==
+        "FOO: 2023 [0]"
+    )
+
+
+def test_from_keyword_only_arguments():
+
+    def testfunc(x=1, foo: str = "FOO", *, dt: date):
+        return f"{foo}: {dt.year} [{x}]"
+
+    schema = Schema.from_arguments(
+        testfunc,
+        keywords_only=True,
+        ignore_extra_keys=True
+    )
+
+    assert (
+        testfunc(**schema.unjsonify({"foo": "OOF", "dt": "2023-08-20", "x": 0})) ==
+        "FOO: 2023 [1]"
+    )

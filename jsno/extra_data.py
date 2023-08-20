@@ -6,14 +6,18 @@ def _get_extra_data_configuration(arg):
     return None
 
 
-IgnoreExtraData = object()
+class IgnoreExtraKeys:
+    instance: "IgnoreExtraKeys"
+
+
+IgnoreExtraKeys.instance = IgnoreExtraKeys()
 
 
 def extra_data(property=None, ignore=None):
     assert property is None or ignore is None
 
     if ignore is True:
-        property = IgnoreExtraData
+        property = IgnoreExtraKeys.instance
 
     def decorator(cls):
         @_get_extra_data_configuration.register(cls)

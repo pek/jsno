@@ -144,3 +144,48 @@ def test_variant_label_overlap_error():
 def test_jsonify_variant_with_label_as_dict():
     with pytest.raises(UnjsonifyError):
         unjsonify[Expression]({"type": {"di": "ct"}})
+
+
+@variantfamily(label='kind')
+@dataclass
+class Config:
+    name: str
+
+
+@variantlabel(["linux", "osx", "bsd"])
+@dataclass
+class DefaultConfig(Config):
+    kind: str
+    shell: str
+
+
+@variantlabel(["free-bsd"])
+@dataclass
+class FreeBSDConfig(DefaultConfig):
+    free: bool
+
+
+@variantlabel("windows")
+@dataclass
+class WindowsConfig(Config):
+    windows_variant: str
+
+
+def test_multi_label_variant():
+    json = [
+        {"kind": "bsd", "name": "blah", "shell": "bash"},
+        {"kind": "osx", "name": "foop", "shell": "csh"},
+        {"kind": "windows", "name": "vista", "windows_variant": "whatever"},
+        {"kind": "free-bsd", "name": "ffff", "shell": "bash", "free": True},
+    ]
+
+    configs = [
+        DefaultConfig(name="blah", kind="bsd", shell="bash"),
+        DefaultConfig(name="foop", kind="osx", shell="csh"),
+        WindowsConfig(name="vista", windows_variant="whatever"),
+        FreeBSDConfig(name="ffff", kind="free-bsd", shell="bash", free=True),
+    ]
+
+    assert unjsonify[list[Config]](json) == configs
+
+    assert jsonify(configs) == json

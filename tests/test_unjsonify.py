@@ -127,6 +127,10 @@ def test_unjsonify_list_of_union_types3():
     assert unjsonify[List[list[bool] | int | str]](["Yes", 51, [True]]) == ["Yes", 51, [True]]
 
 
+def test_unjsonify_list_of_optional_union_types():
+    assert unjsonify[List[int | str | None]](["Yes", 51, None]) == ["Yes", 51, None]
+
+
 def test_unjsonify_optional():
     class Oneof:
         pass
