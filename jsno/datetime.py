@@ -41,6 +41,13 @@ def _(value, as_type):
 
 @jsonify.register(datetime.time)
 def _(value):
+    # time may also contain timezone info, but it is ignored for now
+
+    if value.second == 0 and value.microsecond == 0:
+        # minute precision
+        return f"{value.hour:02}:{value.minute:02}"
+
+    # by default, stringifies to second or microsecond precision
     return str(value)
 
 
@@ -94,7 +101,9 @@ def _(value, as_type):
 # datetime.timedelta
 
 
-jsonify.register(datetime.timedelta)(jsonify_to_string)
+@jsonify.register(datetime.timedelta)
+def _(value):
+    return str(value).removesuffix(", 0:00:00").removesuffix(":00")
 
 
 def make_time_component(multiplier, days, timestr, as_type=datetime.timedelta):
@@ -121,7 +130,10 @@ def _(value, as_type):
     else:
         multiplier = 1
 
-    parts = value.split(" days, ")
+    if value.endswith(" days"):
+        parts = (value.removesuffix(" days"), "00:00")
+    else:
+        parts = value.split(" days, ")
 
     try:
         days = 0 if len(parts) < 2 else int(parts[0])

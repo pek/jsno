@@ -15,8 +15,8 @@ from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError, cast
 # Mapping
 
 
-@jsonify.register(Mapping)
-def _(value):
+@jsonify.register
+def _(value: Mapping):
     return {str(jsonify(key)): jsonify(val) for (key, val) in value.items()}
 
 
@@ -45,7 +45,7 @@ def _(as_type):
 
         return unjsonify_dict_with_types
 
-    if type(as_type) is typing._TypedDictMeta:
+    if isinstance(as_type, typing._TypedDictMeta):
         # TypedDicts must be caught at this stage, as they are
         # non-istantiable subclasses of dict.
         return unjsonify_typeddict_factory(as_type)
@@ -62,8 +62,8 @@ def _(as_type):
 # Sequence
 
 
-@jsonify.register(Sequence)
-def jsonify_sequence(value):
+@jsonify.register
+def jsonify_sequence(value: Sequence):
     return [jsonify(val) for val in value]
 
 
@@ -91,8 +91,8 @@ def unjsonify_sequence_factory(as_type):
 # Set
 
 
-@jsonify.register(Set)
-def _(value):
+@jsonify.register
+def _(value: Set):
     """
     Set is not a sequence, so it needs it's own jsonifier.
     Because the order of iterating over a set is not defined, the jsonification
@@ -101,11 +101,11 @@ def _(value):
 
     # if possible, sort the values first.
     try:
-        value = sorted(value, key=lambda v: (type(v).__name__, v))
+        sorted_value: typing.Iterable = sorted(value, key=lambda v: (type(v).__name__, v))
     except Exception:
-        pass
+        sorted_value = value
 
-    return jsonify_sequence(value)
+    return jsonify_sequence(sorted_value)
 
 
 unjsonify.register_factory(Set)(unjsonify_sequence_factory)
@@ -114,8 +114,8 @@ unjsonify.register_factory(Set)(unjsonify_sequence_factory)
 # ByteString abstract base class
 
 
-@jsonify.register(ByteString)
-def _(value):
+@jsonify.register
+def _(value: ByteString):
     return base64.b64encode(value).decode("ascii")
 
 

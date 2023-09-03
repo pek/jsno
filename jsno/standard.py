@@ -24,8 +24,30 @@ import zoneinfo
 from types import NoneType, SimpleNamespace
 from typing import Any
 
-from jsno.jsonify import jsonify, JSON
+from jsno.jsonify import jsonify
 from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError, cast
+
+
+def register_cast_factory(type_, jsontype):
+
+    @unjsonify.register_factory(type_)
+    def _(as_type):
+
+        def specialized(value):
+            if not isinstance(value, jsontype):
+                raise UnjsonifyError(value, as_type)
+
+            if isinstance(value, as_type):
+                return value
+
+            try:
+                return as_type(value)
+            except ValueError as exc:
+                detail = exc.args[0]
+
+            raise UnjsonifyError(value, as_type, detail)
+
+        return specialized
 
 
 # marking types to be jsonified as strings
@@ -33,11 +55,6 @@ from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError, cast
 
 def jsonify_to_string(value: Any) -> str:
     return str(value)
-
-
-def unjsonify_from_string(value: JSON, as_type: type) -> Any:
-    typecheck(value, str, as_type)
-    return cast(value, as_type)
 
 
 def jsonify_as_string(type_: type, exceptions: type | tuple[type, ...] = ()) -> type:
@@ -59,17 +76,14 @@ def jsonify_as_string(type_: type, exceptions: type | tuple[type, ...] = ()) -> 
             raise UnjsonifyError(value, as_type, detail)
 
     else:
-        unjsonify.register(type_)(unjsonify_from_string)
+        register_cast_factory(type_, str)
 
     return type_
 
 
 # NoneType, jsonify is not needed
 
-@unjsonify.register(NoneType)
-def _(value, as_type):
-    typecheck(value, NoneType, as_type)
-    return None
+register_cast_factory(NoneType, NoneType)
 
 
 # str
@@ -79,10 +93,7 @@ jsonify_as_string(str)
 # bool, jsonify is not needed
 
 
-@unjsonify.register(bool)
-def _(value, as_type):
-    typecheck(value, bool, as_type)
-    return cast(value, as_type)
+register_cast_factory(bool, bool)
 
 
 # int
@@ -93,10 +104,7 @@ def _(value):
     return int(value)
 
 
-@unjsonify.register(int)
-def _(value, as_type):
-    typecheck(value, int, as_type)
-    return cast(value, as_type)
+register_cast_factory(int, int)
 
 
 # float
@@ -107,10 +115,7 @@ def _(value):
     return float(value)
 
 
-@unjsonify.register(float)
-def _(value, as_type):
-    typecheck(value, (float, int), as_type)
-    return cast(value, as_type)
+register_cast_factory(float, (float, int))
 
 
 # enums

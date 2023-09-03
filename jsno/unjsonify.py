@@ -17,8 +17,12 @@ from jsno.fields_unjsonifier import (
 from jsno.constraint import get_validators, get_class_annotations
 
 from jsno.property_name import get_property_name
-from jsno.utils import DictWithoutKey
+from jsno.utils import DictWithoutKey, get_typename
 from jsno.variant import get_variantfamily
+
+
+class SchemaType:
+    _unjsonifier = lambda x: x
 
 
 def cast(value: Any, as_type: Any) -> Any:
@@ -206,6 +210,7 @@ def unjsonify_self(value):
     self_type = unjsonify_context.self_type
     if self_type is None:
         raise TypeError("Self used without context")
+
     return unjsonify[self_type](value)
 
 
@@ -258,7 +263,8 @@ class Unjsonify:
         try:
             factory = unjsonify_factory.dispatch(origin or type_)
         except TypeError:
-            raise TypeError(f"Cannot unjsonify as {repr(type_)} of type {type(type_)}")
+            typename = get_typename(type(type_))
+            raise TypeError(f"Cannot unjsonify as {repr(type_)} of type {typename}")
 
         unjsonify_ = factory(type_)
 
@@ -275,7 +281,14 @@ class Unjsonify:
             return self.specialize(type_)
 
     def __getitem__(self, type_) -> Callable:
-        unjsonify = self._cache.get(type_)
+        try:
+            unjsonify = self._cache.get(type_)
+        except TypeError:
+            if isinstance(type_, SchemaType):
+                return type_._unjsonifier
+            else:
+                return self._dispatch(type_)
+
         if unjsonify is not None:
             return unjsonify
 

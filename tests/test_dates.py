@@ -93,8 +93,29 @@ def test_jsonify_time():
     assert jsonify(datetime.time(23, 59, 59)) == "23:59:59"
 
 
+def test_jsonify_time_with_hour_precision():
+    assert jsonify(datetime.time(23, 0, 0)) == "23:00"
+
+
+def test_jsonify_time_with_minute_precision():
+    assert jsonify(datetime.time(23, 1, 0)) == "23:01"
+
+
+def test_jsonify_time_with_microsecond_precision():
+    assert jsonify(datetime.time(0, 0, 0, 10)) == "00:00:00.000010"
+
+
 def test_unjsonify_time():
     assert unjsonify[datetime.time]("23:59:59") == datetime.time(23, 59, 59)
+
+
+def test_unjsonify_time_with_hour_precision():
+    assert unjsonify[datetime.time]("23:00") == datetime.time(23, 0, 0)
+
+
+def test_unjsonify_time_with_microsecond_precision():
+    assert unjsonify[datetime.time]("00:00:00.000010") == datetime.time(0, 0, 0, 10)
+    assert unjsonify[datetime.time]("00:00:00.00001") == datetime.time(0, 0, 0, 10)
 
 
 def test_unjsonify_time_failure():
@@ -108,7 +129,11 @@ def test_unjsonify_date_failure():
 
 
 def test_jsonify_timedelta_days_only():
-    assert jsonify(datetime.timedelta(days=23)) == "23 days, 0:00:00"
+    assert jsonify(datetime.timedelta(days=23)) == "23 days"
+
+
+def test_jsonify_timedelta_hour_precision():
+    assert jsonify(datetime.timedelta(days=23, hours=2)) == "23 days, 2:00"
 
 
 def test_jsonify_timedelta_microsecond():
@@ -116,11 +141,13 @@ def test_jsonify_timedelta_microsecond():
 
 
 def test_jsonify_timedelta_negative_days():
-    assert jsonify(datetime.timedelta(days=-123)) == "-123 days, 0:00:00"
+    assert jsonify(datetime.timedelta(days=-123)) == "-123 days"
 
 
 def test_unjsonify_timedelta_days_only():
     assert unjsonify[datetime.timedelta]("23 days, 0:00:00") == datetime.timedelta(days=23)
+    assert unjsonify[datetime.timedelta]("23 days, 0:00") == datetime.timedelta(days=23)
+    assert unjsonify[datetime.timedelta]("23 days") == datetime.timedelta(days=23)
 
 
 def test_unjsonify_timedelta_negative():

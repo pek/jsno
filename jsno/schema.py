@@ -3,17 +3,18 @@ Constructing unjsonifiers that unjsonify dictionaries.
 """
 
 import dataclasses
+import functools
 import inspect
 from typing import Any, NotRequired, Required, get_origin
 
 from jsno.extra_data import IgnoreExtraKeys
 from jsno.property_name import get_property_name
-from jsno.unjsonify import unjsonify, get_unjsonify_for_field
+from jsno.unjsonify import unjsonify, get_unjsonify_for_field, SchemaType
 from jsno.fields_unjsonifier import ExtraKeysUnjsonifier, SchemaField
 
 
 @dataclasses.dataclass
-class Schema:
+class Schema(SchemaType):
     schema: dict
     """ The schema, mapping property names to types and default values """
 
@@ -63,7 +64,8 @@ class Schema:
             unjsonify=get_unjsonify_for_field(type_, name),
         )
 
-    def __post_init__(self):
+    @functools.cached_property
+    def _unjsonifier(self):
         fields = [
             self._map_schema_field(
                 name=key,
@@ -78,7 +80,7 @@ class Schema:
         else:
             extra_data_key = self.extra_data_key
 
-        self._unjsonifier = ExtraKeysUnjsonifier.create(
+        return ExtraKeysUnjsonifier.create(
             as_type=None,
             fields=fields,
             default_unjsonifier=self.default_type and unjsonify[self.default_type],
@@ -142,6 +144,11 @@ class Schema:
                 return (type_, defaults[argname])
             else:
                 return type_
+
+        if (varkw := argspec.varkw) is not None:
+            # **kwargs is given. Allow extra arguments, defaulting to the
+            # type of kwargs
+            kwargs["default_type"] = get_spec(varkw)
 
         return Schema(
             schema={argname: get_spec(argname) for argname in argnames},

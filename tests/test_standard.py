@@ -54,6 +54,11 @@ def test_unjsonify_zoneinfo_failure():
         unjsonify[zoneinfo.ZoneInfo]("Europe/Vantaa")
 
 
+def test_unjsonify_zoneinfo_empty_string_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[zoneinfo.ZoneInfo]("")
+
+
 def test_jsonify_as_string_failure():
 
     class ZoneInfoSub(zoneinfo.ZoneInfo):

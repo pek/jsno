@@ -5,6 +5,14 @@ import typing
 from collections.abc import Mapping
 
 
+def get_typename(type_):
+    return (
+        getattr(type_, "__qualname__", None) or
+        getattr(type_, "__name__", None) or
+        str(type_)
+    )
+
+
 @dataclasses.dataclass(slots=True)
 class DictWithoutKey(Mapping):
     base: dict

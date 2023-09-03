@@ -51,10 +51,9 @@ import jsno.datetime  # noqa
 import jsno.tuple  # noqa
 
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 __all__ = [
-    "arguments_schema",
     "constraint",
     "dumps",
     "jsonify",

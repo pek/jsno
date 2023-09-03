@@ -345,19 +345,82 @@ assert json == {"class": "Request", "instance-count": 1}
 assert unjsonify[APIRequest](json) == request
 ```
 
+## Dynamic unjsonification schemas
 
-## Anonymous record types
+It is possible to define ad-hoc unjsonifition schemas without declaring new types,
+using the `jsno.Schema` class.
 
-Sometimes it's better to define substructures in complex data inline, without
-lifting them into named types. For this purpose, jsno provides "Record" type
-constructor, to conveniently define one-off dataclasses:
+For example, defining a schema for HTTP requests:
 
 ```py
-@dataclass
-class User:
-    username: str
-    email: str
-    apikeys: list[Record(value=str, created_at=datetime)]
+schema = jsno.Schema({
+    "method": str,
+    "url": str,
+    "headers": dict[str, str],
+    "body": bytes,
+})
+```
+
+Note that the types are given as _values_, not as _annotations_ to the schema.
+Unjsonifying with the schema returns a dictionary with the shape similar to
+the schema itself.
+
+Unjsonification shemas can be useful when the data format is descrirbed by dynamic
+data, for example user-specific settings that are retrieved from a database,
+instead of being specified in the source code. TypedDict type from python's
+`typing` module can be used for similar purposes, but `Schema` offers a
+couple of additional options:
+
+* `ignore_extra_keys` argument can be given to have the unjsonification discard
+  unexpected keys, instead of raising an error
+* `default_type` argument can be given instead, to have the unjsonification accept
+  any key, unjsonifying the unexpected keys to the default type.
+* `extra_data_key` argument can be supplied to control where the unexpected
+  keys are put. By default, if default type is specified, the extra entries are
+  inserted to the resulting dictionary. If `extra_data_key` is supplied, the
+  extra entries are inserted to a subdictionary pointed by `extra_data_key`
+  instead.
+* `total` argument can be set to False in order to make all listed properties
+  non-required. `total` is True by default, so all keys must be present in the
+  input data. Totality can be overriden for individual properties by annotating
+  them with `typing.Required` or `typing.NotRequired` similarly to their usage
+  with `TypedDict`.
+
+## Function argument schemas
+
+A typical application of unjsonification schemas is converting messages encoded
+in JSON into function arguments, for example converting JSON-encoded HTTP
+request bodies into handler function arguments. For this purpose, jsno provides
+the `Schema.from_arguments` function that analyses the signature of a function
+and produces the corresponding unjsonification schema to convert a JSON object
+to the keyword argument expected by the function.
+
+As an example, here is a simple request handler function signature.
+
+```py
+def process_event(event_type: str, user_id: int, date: datetime):
+    ...
+```
+
+And here is a JSON object that should be processed by the function:
+
+```py
+json_object = {
+    "event_type": "SIGN-IN",
+    "user_id": 1002124,
+    "date": "2023-08-26T06:42:11Z"
+}
+```
+
+To feed the object to the handler function, first derive unjsonification schema
+and use that to convert the JSON object:
+
+```py
+schema = jsno.Schema.from_arguments(process_event)
+
+kwargs = unjsonify[schema](json_object)
+
+process_event(**kwargs)
 ```
 
 ## Variant families
@@ -503,13 +566,20 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### Version 1.2.1
+
+* allow using schemas in unjsonify type arguments
+* handle `**kwargs` in function argument schemas
+* jsonify datetime.time as hour:minute if seconds is 0
+* remove extra zeros from jsonified timedeltas
+
 ### Version 1.2.0 (2023-08-20)
 
 * ignore non-field members of dataclasses when unjsonifying
 * better error messages
 * special handling for optionals
 * multi-label variants
-* optional inclusion of variant labels in json output
+* optional inclusion of variant labels in unjsonized data
 * JSON type alias
 * deriving unjsonification schema from function signature
 

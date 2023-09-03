@@ -7,15 +7,7 @@ from collections.abc import Mapping
 from typing import Any, Callable, Required, NotRequired
 
 from jsno.extra_data import get_extra_data_configuration, IgnoreExtraKeys
-from jsno.utils import contextvar
-
-
-def get_typename(type_):
-    return (
-        getattr(type_, "__qualname__", None) or
-        getattr(type_, "__name__", None) or
-        str(type_)
-    )
+from jsno.utils import contextvar, get_typename
 
 
 class UnjsonifyError(TypeError):
@@ -40,10 +32,6 @@ unjsonify_context = contextvar(on_extra_key="error", self_type=None)
 """Context for passing unjsonify-time configuration down to the unjsonifiers"""
 
 
-def raise_error(value: Any, as_type: Any, detail=None):
-    raise UnjsonifyError(type=as_type, value=value, detail=detail)
-
-
 def typecheck(value: Any, jsontype: type | tuple[type, ...], as_type: Any) -> None:
     """
     Check if the value is an instance of the type given as `jsontype`
@@ -51,7 +39,7 @@ def typecheck(value: Any, jsontype: type | tuple[type, ...], as_type: Any) -> No
     """
 
     if not isinstance(value, jsontype):
-        raise_error(value, as_type)
+        raise UnjsonifyError(value=value, type=as_type)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

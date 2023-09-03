@@ -1,9 +1,9 @@
 from datetime import date
-from typing import NotRequired
+from typing import NotRequired, Annotated
 
 import pytest
 
-from jsno import UnjsonifyError, property_name, Schema
+from jsno import unjsonify, UnjsonifyError, property_name, Schema
 
 
 schema = Schema({
@@ -27,6 +27,22 @@ def test_schema():
             "dates-of-birth": [date(2023, 8, 12)],
             "extra-info": None
         }
+    )
+
+
+def test_unjsonify_schema():
+    assert (
+        unjsonify[list[schema]]([{
+            "first-name": "Foo",
+            "last-name": "Bar",
+            "dates-of-birth": ["2023-08-12"]
+        }]) ==
+        [{
+            "first-name": "Foo",
+            "last-name": "Bar",
+            "dates-of-birth": [date(2023, 8, 12)],
+            "extra-info": None
+        }]
     )
 
 
@@ -146,6 +162,7 @@ def test_from_keyword_only_arguments():
     def testfunc(x=1, foo: str = "FOO", *, dt: date):
         return f"{foo}: {dt.year} [{x}]"
 
+    # using "ignore_extra_keys" but no kwargs
     schema = Schema.from_arguments(
         testfunc,
         keywords_only=True,
@@ -156,3 +173,26 @@ def test_from_keyword_only_arguments():
         testfunc(**schema.unjsonify({"foo": "OOF", "dt": "2023-08-20", "x": 0})) ==
         "FOO: 2023 [1]"
     )
+
+
+def test_from_keyword_only_arguments_with_kwargs():
+
+    def testfunc(x=1, foo: str = "FOO", *, dt: date, **kwargs):
+        return f"{foo}: {dt.year} [{x}] {kwargs}"
+
+    schema = Schema.from_arguments(testfunc)
+
+    assert (
+        testfunc(**schema.unjsonify({"foo": "OOF", "dt": "2023-08-20", "z": 0})) ==
+        "OOF: 2023 [1] {'z': 0}"
+    )
+
+
+def test_property_name_with_funcion_args_schema():
+
+    def testfunc(class_name: Annotated[str, property_name("class-name")]):
+        return class_name
+
+    schema = Schema.from_arguments(testfunc)
+
+    assert testfunc(**schema.unjsonify({"class-name": "abc"})) == "abc"
