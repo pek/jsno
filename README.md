@@ -566,7 +566,12 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
-### Version 1.2.1
+### Version 1.2.2 (2023-10-04)
+
+* export jsno.typecheck function
+* fix a bug that prevented dataclasses that ignore extra keys to be jsonified
+
+### Version 1.2.1 (2023-09-03)
 
 * allow using schemas in unjsonify type arguments
 * handle `**kwargs` in function argument schemas

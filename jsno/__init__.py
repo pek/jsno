@@ -42,7 +42,7 @@ from jsno.property_name import property_name
 from jsno.record import Record
 from jsno.schema import Schema
 from jsno.standard import jsonify_as_string
-from jsno.unjsonify import unjsonify, UnjsonifyError
+from jsno.unjsonify import typecheck, unjsonify, UnjsonifyError
 from jsno.variant import get_variantfamily, variantfamily, variantlabel, VariantFamily
 
 # import to register jsonifiers
@@ -51,7 +51,7 @@ import jsno.datetime  # noqa
 import jsno.tuple  # noqa
 
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 __all__ = [
     "constraint",
@@ -63,6 +63,7 @@ __all__ = [
     "get_variantfamily",
     "loads",
     "property_name",
+    "typecheck",
     "unjsonify",
     "variantfamily",
     "variantlabel",

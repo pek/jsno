@@ -232,6 +232,10 @@ def test_unjsonify_dataclass_with_ignore_extra_data():
     )
 
 
+def test_jsonify_dataclass_with_ignore_extra_data():
+    assert jsonify(Config(username="usr")) == {"username": "usr"}
+
+
 @dataclasses.dataclass
 class Thing:
     name: str

@@ -48,7 +48,7 @@ class DataclassJsonification:
                 result[field.json_name] = jsonify(val)
 
         # if extra data is defined, add it's contents
-        if self.extra_data_property:
+        if isinstance(self.extra_data_property, str):
             if val := getattr(value, self.extra_data_property):
                 for (key, subval) in val.items():
                     result[key] = jsonify(subval)
