@@ -566,6 +566,12 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### Version 1.2.3 (2023-12-26)
+
+* fix bug in error messages with open-ended range constraint
+* fix ujsonifying as JSON type
+* turn value errors to unjsonify errors by default in unjsonifiers
+
 ### Version 1.2.2 (2023-10-04)
 
 * export jsno.typecheck function

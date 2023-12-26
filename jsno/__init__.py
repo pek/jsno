@@ -35,7 +35,7 @@ unjsonify class method.
 
 from jsno.constraint import Constraint, constraint
 from jsno.extra_data import extra_data
-from jsno.jsonify import jsonify, JSON
+from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
 from jsno.property_name import property_name
@@ -43,6 +43,7 @@ from jsno.record import Record
 from jsno.schema import Schema
 from jsno.standard import jsonify_as_string
 from jsno.unjsonify import typecheck, unjsonify, UnjsonifyError
+from jsno.utils import JSON
 from jsno.variant import get_variantfamily, variantfamily, variantlabel, VariantFamily
 
 # import to register jsonifiers
@@ -51,7 +52,7 @@ import jsno.datetime  # noqa
 import jsno.tuple  # noqa
 
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 __all__ = [
     "constraint",

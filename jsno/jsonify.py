@@ -1,17 +1,12 @@
 import dataclasses
 import functools
 
-from typing import NamedTuple, Sequence, Mapping
+from typing import NamedTuple
 
 from jsno.extra_data import get_extra_data_configuration
 from jsno.property_name import get_property_name
+from jsno.utils import JSON
 from jsno.variant import get_variantfamily
-
-
-"""
-valid JSON types.
-"""
-JSON = bool | int | float | str | Sequence["JSON"] | Mapping[str, "JSON"] | None
 
 
 class FieldSpec(NamedTuple):

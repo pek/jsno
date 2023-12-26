@@ -5,6 +5,12 @@ import typing
 from collections.abc import Mapping
 
 
+"""
+valid JSON types.
+"""
+JSON: typing.TypeAlias = bool | int | float | str | list["JSON"] | dict[str, "JSON"] | None
+
+
 def get_typename(type_):
     return (
         getattr(type_, "__qualname__", None) or
@@ -13,8 +19,13 @@ def get_typename(type_):
     )
 
 
-@dataclasses.dataclass(slots=True)
+@dataclasses.dataclass(slots=True, frozen=True)
 class DictWithoutKey(Mapping):
+    """
+    Immutable dictionary that acts as the argument dict, except
+    it does not have the one key.
+    """
+
     base: dict
     key: str
 
@@ -22,7 +33,7 @@ class DictWithoutKey(Mapping):
         if key == self.key:
             return default
         else:
-            return self.base[key]
+            return self.base.get(key, default)
 
     def __getitem__(self, key):
         if key == self.key:
@@ -34,15 +45,15 @@ class DictWithoutKey(Mapping):
             if it != self.key:
                 yield it
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.base) - 1
 
 
+@dataclasses.dataclass(slots=True, frozen=True)
 class Context:
-    def __init__(self, contextvar, values):
-        self.contextvar = contextvar
-        self.values = values
-        self.old_values = {}
+    contextvar: object
+    values: dict
+    old_values: dict = dataclasses.field(default_factory=dict)
 
     def __enter__(self):
         for (key, val) in self.values.items():
@@ -72,7 +83,7 @@ def contextvar(**kwargs):
             setattr(threadlocal, key, value)
 
         def __call__(self, **kwargs):
-            return Context(self, kwargs)
+            return Context(contextvar=self, values=kwargs)
 
     return Contextvar()
 

@@ -17,7 +17,7 @@ from jsno.fields_unjsonifier import (
 from jsno.constraint import get_validators, get_class_annotations
 
 from jsno.property_name import get_property_name
-from jsno.utils import DictWithoutKey, get_typename
+from jsno.utils import DictWithoutKey, get_typename, JSON
 from jsno.variant import get_variantfamily
 
 
@@ -214,7 +214,17 @@ def unjsonify_self(value):
     return unjsonify[self_type](value)
 
 
-def get_validating_unjsonify(as_type, unjsonify, validators):
+def get_validating_unjsonify(
+        as_type: type,
+        unjsonify: Callable,
+        validators: list[Callable]
+
+) -> Callable:
+
+    """
+    Add validators to an unjsonify function.
+    """
+
     if not validators:
         return unjsonify
 
@@ -246,11 +256,7 @@ class Unjsonify:
         if isinstance(type_, NewType):
             type_ = type_.__supertype__
 
-        if type_ is Self:
-            return unjsonify_self
-
-        origin = get_origin(type_)
-        if origin:
+        if origin := get_origin(type_):
             # special cases needed for constructs in typing module, as
             # singledispatch fails cannot handle Union and Literal
             if origin is Union:
@@ -271,8 +277,8 @@ class Unjsonify:
         if isinstance(type_, type):
             validators = get_validators(get_class_annotations(type_))
             return get_validating_unjsonify(type_, unjsonify_, validators)
-
-        return unjsonify_
+        else:
+            return unjsonify_
 
     def _dispatch(self, type_) -> Callable:
         if isinstance(type_, type) and (family := get_variantfamily(type_)):
@@ -293,23 +299,29 @@ class Unjsonify:
             return unjsonify
 
         try:
+            # first do a non-blocking lock
             acquired = self._lock.acquire(blocking=False)
             if not acquired:
+                # if the locking fails, wait until the lock is free
                 self._lock.acquire(blocking=True)
-                unjsonify = self._cache.get(type_)
-                if unjsonify:
+
+                # check again if the another thread has initialized the
+                # unjsonifier already
+                if unjsonify := self._cache.get(type_):
                     return unjsonify
 
             unjsonify = self._dispatch(type_)
-            if not isinstance(unjsonify, ReferThrough):
+            if isinstance(unjsonify, ReferThrough):
+                # Don't cache ReferThroughts
+                return unjsonify
 
-                if self._delay:
-                    # only for concurrency testing
-                    time.sleep(self._delay)
+            if self._delay:
+                # only for concurrency testing
+                time.sleep(self._delay)
 
-                self._cache[type_] = unjsonify
-
+            self._cache[type_] = unjsonify
             return unjsonify
+
         finally:
             self._lock.release()
 
@@ -317,7 +329,16 @@ class Unjsonify:
         def decorator(func):
             @self.register_factory(type_)
             def _(as_type):
-                return lambda value: func(value, as_type)
+
+                def unjsonify(value):
+                    try:
+                        return func(value, as_type)
+                    except ValueError:
+                        pass
+
+                    raise UnjsonifyError(value, as_type)
+
+                return unjsonify
 
             return func
 
@@ -325,6 +346,9 @@ class Unjsonify:
 
     def register_factory(self, type_):
         self._cache.clear()
+        self._cache[JSON] = lambda it: it
+        self._cache[Self] = unjsonify_self
+
         return unjsonify_factory.register(type_)
 
     def context(self, **kwargs):

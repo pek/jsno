@@ -23,7 +23,7 @@ def get_class_annotations(class_) -> list[Annotation]:
 
 
 @functools.singledispatch
-def get_annotation_validator(annotation):
+def get_annotation_validator(annotation) -> Callable | None:
     """
     Extendable type-indexed function that creates a validator
     function out of an annotation, if that's applicable.
@@ -31,7 +31,7 @@ def get_annotation_validator(annotation):
     return None
 
 
-def get_validators(annotations):
+def get_validators(annotations) -> list[Callable]:
     return [
         validator
         for annotation in annotations
@@ -63,7 +63,7 @@ class Constraint(Annotation):
     @staticmethod
     def regex(regex, name=None):
         return RegExConstraint(
-            name=(name or f"Regular expression {regex}"),
+            name=(name or f"Regular expression '{regex}'"),
             regex=re.compile(regex),
         )
 
@@ -130,9 +130,9 @@ class RangeConstraint(Constraint):
     @property
     def name(self):
         if self.min is None:
-            return f"{self.value_name} must be at least {self.min}"
-        elif self.max is None:
             return f"{self.value_name} must be at most {self.max}"
+        elif self.max is None:
+            return f"{self.value_name} must be at least {self.min}"
         else:
             return f"{self.value_name} must be in range {self.min}..{self.max}"
 

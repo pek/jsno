@@ -5,7 +5,7 @@ import zoneinfo
 
 from typing import Annotated, Any, Callable, Optional, List, Literal, NewType
 
-from jsno.unjsonify import unjsonify, UnjsonifyError
+from jsno.unjsonify import unjsonify, UnjsonifyError, JSON
 
 
 helsinki = zoneinfo.ZoneInfo("Europe/Helsinki")
@@ -220,3 +220,9 @@ def test_newtype():
     Point = NewType("Point", tuple[float, float])
 
     assert unjsonify[Point]([1.2, 3.4]) == (1.2, 3.4)
+
+
+def test_unjsonify_json():
+    value = {"foo": 235}
+
+    assert unjsonify[JSON](value) == value

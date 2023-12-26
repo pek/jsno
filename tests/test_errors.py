@@ -1,8 +1,9 @@
+from datetime import timedelta
 from typing import Callable
 
 import pytest
 
-from jsno.unjsonify import unjsonify, UnjsonifyError
+from jsno import unjsonify, UnjsonifyError, Constraint
 
 
 def test_unjsonify_dictionary_with_non_string_key():
@@ -45,3 +46,34 @@ def test_unjsonify_string():
         unjsonify["xx"]
 
     assert str(err.value) == "Cannot unjsonify as 'xx' of type str"
+
+
+def test_range_constraint_error():
+    with pytest.raises(UnjsonifyError) as err:
+        unjsonify[int // Constraint.range(min=1, max=2)](3)
+
+    assert str(err.value).endswith("Value must be in range 1..2")
+
+
+def test_min_constraint_error():
+    with pytest.raises(UnjsonifyError) as err:
+        unjsonify[int // Constraint.range(min=1)](0)
+
+    assert str(err.value).endswith("Value must be at least 1")
+
+
+def test_regex_error():
+    with pytest.raises(UnjsonifyError) as err:
+        unjsonify[str // Constraint.regex(r"\d+")]("00x")
+
+    assert str(err.value).endswith("Violates constraint: Regular expression '\\d+'")
+
+
+def test_unjsonify_timedelta_error():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[timedelta]("xxx")
+
+
+def test_unjsonify_timedelta_error2():
+    with pytest.raises(UnjsonifyError):
+        unjsonify[timedelta]("xx days")

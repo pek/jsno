@@ -9,11 +9,11 @@ Jsonification and unjsonification for the datetime types.
 """
 
 import datetime
-
+from typing import Literal
 
 from jsno.jsonify import jsonify
 from jsno.standard import jsonify_to_string
-from jsno.unjsonify import unjsonify, typecheck, UnjsonifyError
+from jsno.unjsonify import unjsonify, typecheck
 
 
 # datetime.date
@@ -27,13 +27,8 @@ def _(date):
 @unjsonify.register(datetime.date)
 def _(value, as_type):
     typecheck(value, str, as_type)
-    try:
-        (ys, ms, ds) = value.split("-")
-        return as_type(int(ys), int(ms), int(ds))
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise UnjsonifyError(value, as_type, detail)
+    (ys, ms, ds) = value.split("-")
+    return as_type(int(ys), int(ms), int(ds))
 
 
 # datetime.time
@@ -54,13 +49,7 @@ def _(value):
 @unjsonify.register(datetime.time)
 def _(value, as_type):
     typecheck(value, str, as_type)
-
-    try:
-        return datetime.time.fromisoformat(value)
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise UnjsonifyError(value, as_type, detail)
+    return datetime.time.fromisoformat(value)
 
 
 # datetime.datetime
@@ -89,13 +78,7 @@ def _(value):
 @unjsonify.register(datetime.datetime)
 def _(value, as_type):
     typecheck(value, str, as_type)
-
-    try:
-        return as_type.fromisoformat(value)
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise UnjsonifyError(value, as_type, detail)
+    return as_type.fromisoformat(value)
 
 
 # datetime.timedelta
@@ -106,8 +89,15 @@ def _(value):
     return str(value).removesuffix(", 0:00:00").removesuffix(":00")
 
 
-def make_time_component(multiplier, days, timestr, as_type=datetime.timedelta):
+def make_time_component(
+        multiplier: Literal[-1, 1],
+        days: int,
+        timestr: str,
+        as_type: type = datetime.timedelta
+):
+
     if timestr.find(":") == 1:
+        # support 1-digit hour: "4:00"
         timestr = f"0{timestr}"
 
     time = datetime.time.fromisoformat(timestr)
@@ -131,18 +121,14 @@ def _(value, as_type):
         multiplier = 1
 
     if value.endswith(" days"):
+        # "7 days" ==> ("7", "00:00")
         parts = (value.removesuffix(" days"), "00:00")
     else:
+        # "7 days, 01:23:45" ==> ("7", "01:23:45")
         parts = value.split(" days, ")
 
-    try:
-        days = 0 if len(parts) < 2 else int(parts[0])
-        return make_time_component(multiplier, days, parts[-1], as_type)
-
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise UnjsonifyError(value, as_type, detail)
+    days = 0 if len(parts) < 2 else int(parts[0])
+    return make_time_component(multiplier, days, parts[-1], as_type)
 
 
 # datetime.timezone
@@ -158,17 +144,12 @@ def _(value, as_type):
     if value == 'UTC':
         return datetime.timezone.utc
 
-    try:
-        if value.startswith('UTC+'):
-            time = make_time_component(1, 0, value[4:])
-        elif value.startswith('UTC-'):
-            time = make_time_component(-1, 0, value[4:])
-        else:
-            raise ValueError("Timezone must start with 'UTC'")
+    if value.startswith('UTC+'):
+        time = make_time_component(1, 0, value[4:])
+    elif value.startswith('UTC-'):
+        time = make_time_component(-1, 0, value[4:])
+    else:
+        raise ValueError("Timezone must start with 'UTC'")
 
-        return as_type(time)
-
-    except ValueError as exc:
-        detail = exc.args[0]
-
-    raise UnjsonifyError(value, as_type, detail)
+    # convert timedelta representing the UTC offset to a timezone
+    return as_type(time)
