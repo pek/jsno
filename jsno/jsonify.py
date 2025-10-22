@@ -146,7 +146,7 @@ def jsonify_dict(value: dict) -> dict[str, JSON]:
 
     for (key, val) in value.items():
 
-        key_json = key if type(key) is str else str(jsonify(key))
+        key_json = key if isinstance(key, str) else str(jsonify(key))
         val_json = call_jsonify(val)
 
         if result is None:

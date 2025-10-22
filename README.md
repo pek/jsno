@@ -245,7 +245,7 @@ The extra key behavior can be controlled by running the unjsonification inside
 the approproate _context_:
 
 ```py
-with unjsonify.ignore_extra_keys:
+with unjsonify.ignore_extra_keys():
     state = unjsonify[GameState](data)
 ```
 
@@ -565,6 +565,12 @@ Jsno has no 3rd party dependencies.
 
 
 ## Release Notes
+
+### version 1.3.0 (2025-10-22)
+
+* give type to unjsonify
+* remove anonymous record type
+* deprecate // operator
 
 ### Version 1.2.3 (2023-12-26)
 

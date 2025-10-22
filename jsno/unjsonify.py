@@ -6,7 +6,7 @@ import types
 
 from collections.abc import Mapping
 from typing import (
-    Annotated, Any, Callable, Union, Literal, NewType, Self,
+    Annotated, Any, Callable, Union, Literal, NewType, Self, Type, TypeVar,
     get_args, get_origin, get_type_hints,
     Required, NotRequired,
 )
@@ -20,9 +20,10 @@ from jsno.property_name import get_property_name
 from jsno.utils import DictWithoutKey, get_typename, JSON
 from jsno.variant import get_variantfamily
 
+T = TypeVar("T")
 
 class SchemaType:
-    _unjsonifier = lambda x: x
+    pass
 
 
 def cast(value: Any, as_type: Any) -> Any:
@@ -163,7 +164,7 @@ def get_unjsonify_variant(as_type, family) -> Callable:
     label_name = family.label_name
 
     def specialized(value):
-        typecheck(value, (dict, Mapping), as_type)
+        typecheck(value, Mapping, as_type)
 
         # get the label property from the value
         label = value.get(label_name)
@@ -286,7 +287,10 @@ class Unjsonify:
         else:
             return self.specialize(type_)
 
-    def __getitem__(self, type_) -> Callable:
+    def __getitem__(self, type_: Type[T]) -> Callable[[JSON], T]:
+        """
+        Return the unjsonify function specialized for the given type.
+        """
         try:
             unjsonify = self._cache.get(type_)
         except TypeError:

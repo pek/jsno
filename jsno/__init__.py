@@ -39,7 +39,6 @@ from jsno.jsonify import jsonify
 from jsno.jsonize import loads, dumps
 from jsno.method import jsonify_with_method
 from jsno.property_name import property_name
-from jsno.record import Record
 from jsno.schema import Schema
 from jsno.standard import jsonify_as_string
 from jsno.unjsonify import typecheck, unjsonify, UnjsonifyError
@@ -71,7 +70,6 @@ __all__ = [
     "Constraint",
     "JSON",
     "Schema",
-    "Record",
     "UnjsonifyError",
     "VariantFamily",
 ]

@@ -7,7 +7,7 @@ import dataclasses
 import enum
 import pytest
 
-from typing import Any, Dict, List, Self
+from typing import Any, Dict, List, Self, Annotated
 
 import jsno
 from jsno import jsonify, unjsonify, UnjsonifyError
@@ -253,10 +253,10 @@ def test_optional_property_without_default():
 
 @dataclasses.dataclass
 class FieldRequest:
-    name: str // jsno.property_name("field-name")  # noqa
-    type: str // jsno.property_name("field-type") // jsno.Constraint.len(min=1)  # noqa
+    name: Annotated[str, jsno.property_name("field-name")]
+    type: Annotated[str, jsno.property_name("field-type"), jsno.Constraint.len(min=1)]
 
-    nojson: str // jsno.property_name(None) = "nope"
+    nojson: Annotated[str, jsno.property_name(None)] = "nope"
 
 
 def test_jsonify_property_name():

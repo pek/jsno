@@ -51,6 +51,7 @@ class Constraint(Annotation):
             cls = FunctionConstraint
 
         obj = object.__new__(cls)
+
         obj.__init__(*args, **kwargs)
         return obj
 
@@ -64,7 +65,7 @@ class Constraint(Annotation):
     def regex(regex, name=None):
         return RegExConstraint(
             name=(name or f"Regular expression '{regex}'"),
-            regex=re.compile(regex),
+            regex_=re.compile(regex),
         )
 
     def evaluate(self, value) -> bool:
@@ -157,10 +158,10 @@ class RegExConstraint(Constraint):
     """
 
     name: str
-    regex: re.Pattern
+    regex_: re.Pattern
 
     def evaluate(self, value) -> bool:
-        return self.regex.fullmatch(str(value)) is not None
+        return self.regex_.fullmatch(str(value)) is not None
 
 
 Constraint.range = RangeConstraint  # type: ignore

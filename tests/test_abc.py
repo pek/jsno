@@ -2,6 +2,7 @@ import collections
 import datetime
 import dataclasses
 import os
+from typing import cast, Any
 
 import pytest
 
@@ -41,7 +42,7 @@ def test_jsonify_mixed_set():
     assert jsonify(set((1, 2, 3, "abc", None))) == [None, 1, 2, 3, "abc"]
 
 
-def test_jsonify_unsortable():
+def test_jsonify_unsortable() -> None:
 
     @dataclasses.dataclass
     class Wrap:
@@ -50,7 +51,7 @@ def test_jsonify_unsortable():
         def __hash__(self):
             return hash(self.value)
 
-    jsonified = jsonify(set((Wrap("x"), Wrap("y"))))
+    jsonified = cast(list[Any], jsonify(set((Wrap("x"), Wrap("y")))))
 
     assert (
         sorted(jsonified, key=lambda it: it["value"]) ==
@@ -74,12 +75,12 @@ def test_typed_dict_subtype():
 
     # subclass dictionary values are NOT correctly converted
     subregistry = unjsonify[DateRegistry]({"today": "2023-08-05"})
-    assert type(subregistry) == DateRegistry
+    assert type(subregistry) is DateRegistry
     assert subregistry == {"today": "2023-08-05"}
 
     # attach types to circumvent problem
     DateRegistryTyped = DateRegistry[str, datetime.date]
 
     typedregistry = unjsonify[DateRegistryTyped]({"today": "2023-08-05"})
-    assert type(typedregistry) == DateRegistry
+    assert type(typedregistry) is DateRegistry
     assert registry == {"today": datetime.date(2023, 8, 5)}

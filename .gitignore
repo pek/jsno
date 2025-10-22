@@ -4,3 +4,7 @@ dist/
 
 # Unit test / coverage reports
 .coverage
+
+# pipenv
+Pipfile
+Pipfile.lock

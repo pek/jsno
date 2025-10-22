@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 from random import Random
+from typing import Annotated
 
 import json
 import pathlib
@@ -9,7 +10,7 @@ import jsno
 from jsno import jsonify, unjsonify
 
 
-def test_domain_record_example():
+def test_domain_record_example() -> None:
 
     @dataclass
     class DomainRecord:
@@ -48,7 +49,8 @@ def test_domain_record_example():
     jsonified = json.loads(pathlib.Path('/tmp/domains.json').read_text())
     domains = jsno.unjsonify[list[DomainRecord]](jsonified)
 
-    assert domains[0].enabled_at.year == 1992
+    enabled_at = domains[0].enabled_at
+    assert enabled_at and enabled_at.year == 1992
 
 
 @jsno.jsonify.register(Random)
@@ -84,8 +86,8 @@ def test_random_example():
 
 @dataclass
 class APIRequest:
-    class_: str // jsno.property_name("class")  # noqa
-    instance_count: int // jsno.property_name("instance-count")  # noqa
+    class_: Annotated[str, jsno.property_name("class")]
+    instance_count: Annotated[int, jsno.property_name("instance-count")]
 
 
 def test_api_request_example():

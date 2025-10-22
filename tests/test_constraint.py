@@ -16,7 +16,7 @@ def test_function_constraint():
 
 
 def test_range():
-    Number = int // Constraint.range(min=1, max=3)
+    Number = Annotated[int, Constraint.range(min=1, max=3)]
 
     assert unjsonify[Number](1) == 1
 
@@ -25,7 +25,7 @@ def test_range():
 
 
 def test_len_range():
-    Identifier = str // Constraint.len(min=16, max=16)
+    Identifier = Annotated[str, Constraint.len(min=16, max=16)]
 
     assert unjsonify[Identifier]("1234567890abcdef") == "1234567890abcdef"
 
@@ -34,7 +34,7 @@ def test_len_range():
 
 
 def test_len_min():
-    Identifier = str // Constraint.len(min=16)
+    Identifier = Annotated[str, Constraint.len(min=16)]
 
     assert unjsonify[Identifier]("1234567890abcdef") == "1234567890abcdef"
 
@@ -43,7 +43,7 @@ def test_len_min():
 
 
 def test_len_max():
-    Identifier = str // Constraint.len(max=3)
+    Identifier = Annotated[str, Constraint.len(max=3)]
 
     assert unjsonify[Identifier]("123") == "123"
 
@@ -58,7 +58,7 @@ EmailConstraint = Constraint(lambda it: "@" in it, "Valid email address")
 @dataclass
 class User:
     username: str
-    email: str // EmailConstraint
+    email: Annotated[str, EmailConstraint]
 
 
 def test_email_contraint():
@@ -69,7 +69,7 @@ def test_email_contraint():
 
 
 def test_regex():
-    Email = str // Constraint.regex(r"[\w\.]+@([\w-]+\.)+[\w-]{2,4}")
+    Email = Annotated[str, Constraint.regex(r"[\w\.]+@([\w-]+\.)+[\w-]{2,4}")]
 
     assert unjsonify[Email]("valid.email@example.com") == "valid.email@example.com"
 
@@ -78,7 +78,7 @@ def test_regex():
 
 
 def test_double_constrait():
-    Aaaaa = str // Constraint.regex(r"[a]+") // Constraint.len(min=5)
+    Aaaaa = Annotated[str, Constraint.regex(r"[a]+"), Constraint.len(min=5)]
 
     assert unjsonify[Aaaaa]("aaaaa") == "aaaaa"
 
@@ -95,7 +95,7 @@ LiteralString = Constraint.regex('".*"')
 
 @dataclass
 class LiteralValue:
-    value: str // (LiteralInt | LiteralString)
+    value: Annotated[str, (LiteralInt | LiteralString)]
 
 
 def test_or_constraint():
@@ -110,7 +110,7 @@ def test_or_constraint():
 
 @dataclass
 class LiteralValues:
-    values: list[str // LiteralString]
+    values: list[Annotated[str, LiteralString]]
 
 
 def test_embedded_constraint():

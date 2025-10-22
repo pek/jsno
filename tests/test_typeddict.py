@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypedDict, NotRequired, Required, NamedTuple, Optional
+from typing import TypedDict, NotRequired, Required, NamedTuple, Optional, Annotated
 
 import pytest
 
@@ -68,7 +68,7 @@ def test_unjsonify_namedtuple_error():
 
 class AnnotatedLogEntry(TypedDict):
     date: datetime
-    message: str // Constraint.len(min=2)
+    message: Annotated[str, Constraint.len(min=2)]
 
 
 def test_unjsonify_constrained():
@@ -81,8 +81,8 @@ def test_unjsonify_constrained():
 
 
 class LogEntryWithPropertyName(TypedDict):
-    date: datetime // property_name("log-date")  # noqa
-    message: str // Constraint.len(min=2)
+    date: Annotated[datetime, property_name("log-date")]
+    message: Annotated[str, Constraint.len(min=2)]
 
 
 def test_unjsonify_property_name_error():
