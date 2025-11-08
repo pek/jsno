@@ -35,7 +35,7 @@ def _(value, as_type):
 
 
 @jsonify.register(datetime.time)
-def _(value):
+def _(value: datetime.time) -> str:
     # time may also contain timezone info, but it is ignored for now
 
     if value.second == 0 and value.microsecond == 0:
@@ -47,7 +47,7 @@ def _(value):
 
 
 @unjsonify.register(datetime.time)
-def _(value, as_type):
+def _(value, as_type) -> datetime.time:
     typecheck(value, str, as_type)
     return datetime.time.fromisoformat(value)
 
@@ -63,7 +63,7 @@ def is_utc_datetime(dt) -> bool:
 
 
 @jsonify.register(datetime.datetime)
-def _(value):
+def _(value: datetime.datetime) -> str:
     """
     Format the datetime as a string. Uses isoformat, except  when
     the timezone is UTC, attaches "Z" as the timezone, instead of "+00:00"
@@ -76,7 +76,7 @@ def _(value):
 
 
 @unjsonify.register(datetime.datetime)
-def _(value, as_type):
+def _(value, as_type) -> datetime.datetime:
     typecheck(value, str, as_type)
     return as_type.fromisoformat(value)
 
@@ -85,7 +85,7 @@ def _(value, as_type):
 
 
 @jsonify.register(datetime.timedelta)
-def _(value):
+def _(value: datetime.timedelta) -> str:
     return str(value).removesuffix(", 0:00:00").removesuffix(":00")
 
 
@@ -111,9 +111,10 @@ def make_time_component(
 
 
 @unjsonify.register(datetime.timedelta)
-def _(value, as_type):
+def _(value, as_type) -> datetime.timedelta:
     typecheck(value, str, as_type)
 
+    multiplier: Literal[1, -1]
     if value.startswith('-'):
         multiplier = -1
         value = value[1:]
@@ -138,7 +139,7 @@ jsonify.register(datetime.timezone)(jsonify_to_string)
 
 
 @unjsonify.register(datetime.timezone)
-def _(value, as_type):
+def _(value, as_type) -> datetime.timezone:
     typecheck(value, str, as_type)
 
     if value == 'UTC':
