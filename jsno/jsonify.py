@@ -117,6 +117,7 @@ def jsonify_list(value: list) -> list[JSON]:
     else:
         while True:
             if ix == count:
+                # iterated over all the elements, each of which was kept as-is
                 return value
 
             val_json = call_jsonify(value[ix])
@@ -129,8 +130,7 @@ def jsonify_list(value: list) -> list[JSON]:
             ix += 1
 
     while ix < count:
-        val_json = call_jsonify(value[ix])
-        result.append(value[ix] if val_json is value[ix] else val_json)
+        result.append(call_jsonify(value[ix]))
         ix += 1
 
     return result

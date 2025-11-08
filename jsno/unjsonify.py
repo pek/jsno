@@ -404,5 +404,6 @@ def _(value, as_type):
 def _(as_type):
     args = get_args(as_type)
     type_ = args[0]
+    validators = get_validators(args[1:])
 
-    return get_validating_unjsonify(type_, unjsonify[type_], get_validators(args[1:]))
+    return get_validating_unjsonify(type_, unjsonify[type_], validators)
