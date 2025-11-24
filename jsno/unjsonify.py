@@ -291,6 +291,7 @@ class Unjsonify:
         """
         Return the unjsonify function specialized for the given type.
         """
+
         try:
             unjsonify = self._cache.get(type_)
         except TypeError:
@@ -313,6 +314,13 @@ class Unjsonify:
                 # unjsonifier already
                 if unjsonify := self._cache.get(type_):
                     return unjsonify
+
+            if get_origin(type_) is Annotated:
+                args = get_args(type_)
+                real_type = args[0]
+                validators = get_validators(args[1:])
+
+                return get_validating_unjsonify(real_type, self[real_type], validators)
 
             unjsonify = self._dispatch(type_)
             if isinstance(unjsonify, ReferThrough):
@@ -398,12 +406,3 @@ def get_unjsonify_union(as_type):
 def _(value, as_type):
     """Unjsonify Any type: just return the value"""
     return value
-
-
-@unjsonify.register_factory(Annotated)
-def _(as_type):
-    args = get_args(as_type)
-    type_ = args[0]
-    validators = get_validators(args[1:])
-
-    return get_validating_unjsonify(type_, unjsonify[type_], validators)
