@@ -5,7 +5,7 @@ Jsonification and unjsonification for abstract base classes
 import base64
 import typing
 
-from collections.abc import ByteString, Mapping, Sequence, Set
+from collections.abc import Mapping, Sequence, Set
 
 from jsno.jsonify import jsonify
 from jsno.typeddict import unjsonify_typeddict_factory
@@ -115,11 +115,11 @@ unjsonify.register_factory(Set)(unjsonify_sequence_factory)
 
 
 @jsonify.register
-def _(value: ByteString):
+def _(value: bytes):
     return base64.b64encode(value).decode("ascii")
 
 
-@unjsonify.register(ByteString)
+@unjsonify.register(bytes)
 def _(value, as_type):
     typecheck(value, str, as_type)
 
