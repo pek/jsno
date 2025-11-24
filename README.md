@@ -566,6 +566,11 @@ Jsno has no 3rd party dependencies.
 
 ## Release Notes
 
+### version 1.3.1 (2025-11-24)
+
+* fix handling of Annotated to work with Python 3.13
+* remove jsonify and unjsonify for deprecated ByteString
+
 ### version 1.3.0 (2025-10-22)
 
 * give type to unjsonify

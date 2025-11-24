@@ -4,9 +4,9 @@ import threading
 import time
 import types
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import (
-    Annotated, Any, Callable, Union, Literal, NewType, Self, Type, TypeVar,
+    Annotated, Any, Union, Literal, NewType, Self, Type, TypeVar,
     get_args, get_origin, get_type_hints,
     Required, NotRequired,
 )
@@ -18,7 +18,7 @@ from jsno.constraint import get_validators, get_class_annotations
 
 from jsno.property_name import get_property_name
 from jsno.utils import DictWithoutKey, get_typename, JSON
-from jsno.variant import get_variantfamily
+from jsno.variant import get_variantfamily, VariantFamily, OrphanVariant
 
 T = TypeVar("T")
 
@@ -153,7 +153,7 @@ def get_unjsonify_dataclass(as_type):
     return specialized
 
 
-def get_unjsonify_variant(as_type, family) -> Callable:
+def get_unjsonify_variant(as_type: type, family: VariantFamily | OrphanVariant) -> Callable:
     """
     Get the unjsonify function specialized for a variant family
     """
@@ -195,7 +195,7 @@ def get_unjsonify_variant(as_type, family) -> Callable:
     return specialized
 
 
-def get_unjsonify_literal(as_type):
+def get_unjsonify_literal(as_type: type) -> Callable:
     options = get_args(as_type)
 
     def specialized(value):
@@ -291,6 +291,7 @@ class Unjsonify:
         """
         Return the unjsonify function specialized for the given type.
         """
+
         try:
             unjsonify = self._cache.get(type_)
         except TypeError:
@@ -313,6 +314,13 @@ class Unjsonify:
                 # unjsonifier already
                 if unjsonify := self._cache.get(type_):
                     return unjsonify
+
+            if get_origin(type_) is Annotated:
+                args = get_args(type_)
+                real_type = args[0]
+                validators = get_validators(args[1:])
+
+                return get_validating_unjsonify(real_type, self[real_type], validators)
 
             unjsonify = self._dispatch(type_)
             if isinstance(unjsonify, ReferThrough):
@@ -398,11 +406,3 @@ def get_unjsonify_union(as_type):
 def _(value, as_type):
     """Unjsonify Any type: just return the value"""
     return value
-
-
-@unjsonify.register_factory(Annotated)
-def _(as_type):
-    args = get_args(as_type)
-    type_ = args[0]
-
-    return get_validating_unjsonify(type_, unjsonify[type_], get_validators(args[1:]))
