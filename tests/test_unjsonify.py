@@ -12,6 +12,9 @@ helsinki = zoneinfo.ZoneInfo("Europe/Helsinki")
 utc = zoneinfo.ZoneInfo("UTC")
 
 
+type YesOrNo = Literal["yes", "no"]
+
+
 def test_unjsonify_none():
     assert unjsonify[type(None)](None) is None
 
@@ -57,6 +60,16 @@ def test_unjsonify_list_of_floats():
 
 def test_unjsonify_list_of_bools():
     assert unjsonify[list[bool]]([True, False]) == [True, False]
+
+
+def test_unjsonify_bool_as_number():
+    with pytest.raises(UnjsonifyError):
+        assert unjsonify[list[int]]([True, False]) == [1, 0]
+
+
+def test_unjsonify_number_as_bool():
+    with pytest.raises(UnjsonifyError):
+        assert unjsonify[list[bool]]([1, 0]) == [True, False]
 
 
 def test_unjsonify_set_of_ints():
@@ -159,6 +172,13 @@ def test_unjsonify_literal():
 def test_unjsonify_literal_failure():
     with pytest.raises(UnjsonifyError):
         unjsonify[Literal["A", "B"]]("C")
+
+
+def test_unjsonify_type_alias():
+    assert unjsonify[YesOrNo]("yes") == "yes"
+
+    with pytest.raises(UnjsonifyError):
+        unjsonify[YesOrNo]("maybe")
 
 
 def test_unjsonify_annotated():

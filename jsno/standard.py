@@ -38,6 +38,8 @@ def register_cast_factory(type_, jsontype):
                 raise UnjsonifyError(value, as_type)
 
             if isinstance(value, as_type):
+                if as_type is not bool and type(value) is bool:
+                    raise UnjsonifyError(value, as_type, "cannot accept as bool")
                 return value
 
             try:

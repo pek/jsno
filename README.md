@@ -16,7 +16,7 @@ It is also easily _extensible_, so that custom jsonification can be
 defined for new datatypes.
 
 Jsno has special support for _dataclasses_, so no effort is needed to
-make jsonificatiin work for classes defined as dataclasses.
+make jsonification work for classes defined as dataclasses.
 
 ## Basic usage
 
@@ -266,28 +266,14 @@ class User:
 
 ```
 
-Constraints are always used within Annotated, so there is a shortcut operator to
-make the definitions clearer. This is equivalent to the definition above:
-
-```py
-@dataclass
-class User:
-    username: str
-    email: str // Constraint(lambda it: "@" in it)
-
-```
-
-Using the `//`-operator, the type of the property is directly after the colon,
-not nested inside an Annotated-expression.
-
 The most typical constraints are those that limit the value or the length of a
 property to a certain range. For these, jsno provides predefined shortcuts:
 
 ```py
 @dataclass
 class Player:
-    username: str // Constraint.len(min=4, max=16)
-    credits: int // Constraint.range(min=0)
+    username: Annotated[str, Constraint.len(min=4, max=16)]
+    credits: Annotated[int, Constraint.range(min=0)]
 ```
 
 There is also a constraint for matching the value with a regular expression:
@@ -295,7 +281,7 @@ There is also a constraint for matching the value with a regular expression:
 ```py
 @dataclass
 class Variable:
-    name: str // Constraint.regex("[A-Za-z_][A-Za-z0-9_]*")
+    name: Annotated[str, Constraint.regex("[A-Za-z_][A-Za-z0-9_]*")]
 ```
 
 Constraints can be joined using the or-operator `|`:
@@ -306,7 +292,7 @@ LiteralString = Constraint.regex('".*"')
 
 @dataclass
 class LiteralValue:
-    value: str // (LiteralInt | LiteralString)
+    value: Annotated[str, (LiteralInt | LiteralString)]
 ```
 
 Constraints can be attached to classes as well:
@@ -334,8 +320,8 @@ that can be attached to a type similar to a constraint:
 ```py
 @dataclass
 class APIRequest:
-    class_: str // jsno.property_name("class")
-    instance_count: int // jsno.property_name("instance-count")
+    class_: Annotated[str, jsno.property_name("class")]
+    instance_count: Annotated[int, jsno.property_name("instance-count")]
 
 
 request = APIRequest(class_="Request", instance_count=1)
@@ -565,6 +551,12 @@ Jsno has no 3rd party dependencies.
 
 
 ## Release Notes
+
+### version 1.4.0 (2026-08-15)
+
+* fix issue of booleans being accepted as numbers
+* support type alias types of Python 3.12
+* requires Python 3.13
 
 ### version 1.3.1 (2025-11-24)
 

@@ -6,7 +6,7 @@ import types
 
 from collections.abc import Callable, Mapping
 from typing import (
-    Annotated, Any, Union, Literal, NewType, Self, Type, TypeVar,
+    Annotated, Any, Union, Literal, NewType, Self, Type, TypeVar, TypeAliasType,
     get_args, get_origin, get_type_hints,
     Required, NotRequired,
 )
@@ -21,6 +21,7 @@ from jsno.utils import DictWithoutKey, get_typename, JSON
 from jsno.variant import get_variantfamily, VariantFamily, OrphanVariant
 
 T = TypeVar("T")
+
 
 class SchemaType:
     pass
@@ -256,6 +257,9 @@ class Unjsonify:
     def specialize(self, type_) -> Callable:
         if isinstance(type_, NewType):
             type_ = type_.__supertype__
+
+        if isinstance(type_, TypeAliasType):
+            type_ = type_.__value__
 
         if origin := get_origin(type_):
             # special cases needed for constructs in typing module, as
